@@ -1,0 +1,9 @@
+pandas
+openpyxl
+numpy
+scikit-learn
+fastapi
+uvicorn
+requests
+python-dotenv
+fpdf2

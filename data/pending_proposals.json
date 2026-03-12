@@ -1,0 +1,29 @@
+{
+  "PROP_QUALITY_20260310_000547": {
+    "proposal_id": "PROP_QUALITY_20260310_000547",
+    "mode": "quality",
+    "batch_id": "T046",
+    "new_params": {
+      "Granulation_Time": 12.0,
+      "Binder_Amount": 7.3,
+      "Drying_Temp": 66.0,
+      "Drying_Time": 20.0,
+      "Compression_Force": 15.2,
+      "Machine_Speed": 122.0,
+      "Lubricant_Conc": 0.6
+    },
+    "new_scores": {
+      "Quality_Score": 83.182,
+      "Yield_Score": 50.521,
+      "Total_Energy_kWh": 75.724,
+      "Carbon_kg_CO2": 62.094,
+      "Performance_Score": 75.45,
+      "composite_score": 0.7856
+    },
+    "improvement_pct": 4.53,
+    "status": "ACCEPTED",
+    "created_at": "2026-03-10T00:05:47.193795",
+    "reviewed_at": "2026-03-10T00:05:47.200798",
+    "reviewer_note": "T046 shows better balanced performance. Approved."
+  }
+}

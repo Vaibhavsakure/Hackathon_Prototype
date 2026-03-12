@@ -1,0 +1,27 @@
+[
+  {
+    "proposal_id": "PROP_QUALITY_20260310_000547",
+    "action": "ACCEPTED",
+    "mode": "quality",
+    "batch_id": "T046",
+    "improvement": 4.53,
+    "reviewer_note": "T046 shows better balanced performance. Approved.",
+    "timestamp": "2026-03-10T00:05:47.200798"
+  },
+  {
+    "action": "REPRIORITIZED",
+    "mode": "energy",
+    "old_weights": {
+      "quality": 0.1,
+      "yield": 0.2,
+      "energy": 0.7
+    },
+    "new_weights": {
+      "quality": 0.1,
+      "yield": 0.15,
+      "energy": 0.75
+    },
+    "reason": "Sustainability target: reduce carbon by 15% this quarter",
+    "timestamp": "2026-03-10T00:05:47.216323"
+  }
+]

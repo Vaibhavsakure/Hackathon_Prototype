@@ -1,0 +1,373 @@
+{
+  "energy": {
+    "mode": "energy",
+    "label": "Best Yield + Lowest Energy",
+    "version": 1,
+    "status": "active",
+    "weights": {
+      "quality": 0.1,
+      "yield": 0.15,
+      "energy": 0.75
+    },
+    "optimal_params": {
+      "Granulation_Time": 17.0,
+      "Binder_Amount": 9.3,
+      "Drying_Temp": 58.0,
+      "Drying_Time": 30.0,
+      "Compression_Force": 11.0,
+      "Machine_Speed": 178.0,
+      "Lubricant_Conc": 1.2
+    },
+    "benchmark_scores": {
+      "Quality_Score": 72.569,
+      "Yield_Score": 52.517,
+      "Total_Energy_kWh": 73.08,
+      "Carbon_kg_CO2": 59.926,
+      "Performance_Score": 69.894,
+      "composite_score": 0.9177
+    },
+    "source_batch": "T038",
+    "pareto_solutions": 13,
+    "pareto_front": [
+      {
+        "batch_id": "T002",
+        "quality": 83.73,
+        "yield": 49.39,
+        "energy": 88.14,
+        "carbon": 72.27
+      },
+      {
+        "batch_id": "T009",
+        "quality": 81.05,
+        "yield": 53.12,
+        "energy": 98.63,
+        "carbon": 80.87
+      },
+      {
+        "batch_id": "T012",
+        "quality": 68.69,
+        "yield": 56.42,
+        "energy": 106.39,
+        "carbon": 87.24
+      },
+      {
+        "batch_id": "T017",
+        "quality": 82.84,
+        "yield": 50.95,
+        "energy": 77.8,
+        "carbon": 63.79
+      },
+      {
+        "batch_id": "T023",
+        "quality": 65.53,
+        "yield": 56.6,
+        "energy": 80.33,
+        "carbon": 65.87
+      },
+      {
+        "batch_id": "T024",
+        "quality": 79.17,
+        "yield": 54.69,
+        "energy": 75.87,
+        "carbon": 62.21
+      },
+      {
+        "batch_id": "T028",
+        "quality": 82.2,
+        "yield": 52.08,
+        "energy": 85.88,
+        "carbon": 70.42
+      },
+      {
+        "batch_id": "T033",
+        "quality": 82.18,
+        "yield": 52.52,
+        "energy": 85.86,
+        "carbon": 70.4
+      },
+      {
+        "batch_id": "T038",
+        "quality": 72.57,
+        "yield": 52.52,
+        "energy": 73.08,
+        "carbon": 59.93
+      },
+      {
+        "batch_id": "T046",
+        "quality": 83.18,
+        "yield": 50.52,
+        "energy": 75.72,
+        "carbon": 62.09
+      },
+      {
+        "batch_id": "T048",
+        "quality": 83.43,
+        "yield": 51.48,
+        "energy": 77.98,
+        "carbon": 63.94
+      },
+      {
+        "batch_id": "T055",
+        "quality": 79.3,
+        "yield": 52.0,
+        "energy": 80.66,
+        "carbon": 66.14
+      },
+      {
+        "batch_id": "T059",
+        "quality": 83.18,
+        "yield": 51.82,
+        "energy": 100.37,
+        "carbon": 82.31
+      }
+    ],
+    "last_updated": "2026-03-10T00:05:47.216323"
+  },
+  "quality": {
+    "mode": "quality",
+    "label": "Optimal Quality + Best Yield",
+    "version": 2,
+    "status": "active",
+    "weights": {
+      "quality": 0.7,
+      "yield": 0.2,
+      "energy": 0.1
+    },
+    "optimal_params": {
+      "Granulation_Time": 12.0,
+      "Binder_Amount": 7.3,
+      "Drying_Temp": 66.0,
+      "Drying_Time": 20.0,
+      "Compression_Force": 15.2,
+      "Machine_Speed": 122.0,
+      "Lubricant_Conc": 0.6
+    },
+    "benchmark_scores": {
+      "Quality_Score": 83.182,
+      "Yield_Score": 50.521,
+      "Total_Energy_kWh": 75.724,
+      "Carbon_kg_CO2": 62.094,
+      "Performance_Score": 75.45,
+      "composite_score": 0.7856
+    },
+    "source_batch": "T046",
+    "pareto_solutions": 13,
+    "pareto_front": [
+      {
+        "batch_id": "T002",
+        "quality": 83.73,
+        "yield": 49.39,
+        "energy": 88.14,
+        "carbon": 72.27
+      },
+      {
+        "batch_id": "T009",
+        "quality": 81.05,
+        "yield": 53.12,
+        "energy": 98.63,
+        "carbon": 80.87
+      },
+      {
+        "batch_id": "T012",
+        "quality": 68.69,
+        "yield": 56.42,
+        "energy": 106.39,
+        "carbon": 87.24
+      },
+      {
+        "batch_id": "T017",
+        "quality": 82.84,
+        "yield": 50.95,
+        "energy": 77.8,
+        "carbon": 63.79
+      },
+      {
+        "batch_id": "T023",
+        "quality": 65.53,
+        "yield": 56.6,
+        "energy": 80.33,
+        "carbon": 65.87
+      },
+      {
+        "batch_id": "T024",
+        "quality": 79.17,
+        "yield": 54.69,
+        "energy": 75.87,
+        "carbon": 62.21
+      },
+      {
+        "batch_id": "T028",
+        "quality": 82.2,
+        "yield": 52.08,
+        "energy": 85.88,
+        "carbon": 70.42
+      },
+      {
+        "batch_id": "T033",
+        "quality": 82.18,
+        "yield": 52.52,
+        "energy": 85.86,
+        "carbon": 70.4
+      },
+      {
+        "batch_id": "T038",
+        "quality": 72.57,
+        "yield": 52.52,
+        "energy": 73.08,
+        "carbon": 59.93
+      },
+      {
+        "batch_id": "T046",
+        "quality": 83.18,
+        "yield": 50.52,
+        "energy": 75.72,
+        "carbon": 62.09
+      },
+      {
+        "batch_id": "T048",
+        "quality": 83.43,
+        "yield": 51.48,
+        "energy": 77.98,
+        "carbon": 63.94
+      },
+      {
+        "batch_id": "T055",
+        "quality": 79.3,
+        "yield": 52.0,
+        "energy": 80.66,
+        "carbon": 66.14
+      },
+      {
+        "batch_id": "T059",
+        "quality": 83.18,
+        "yield": 51.82,
+        "energy": 100.37,
+        "carbon": 82.31
+      }
+    ],
+    "last_updated": "2026-03-10T00:05:47.200798"
+  },
+  "balanced": {
+    "mode": "balanced",
+    "label": "Max Performance + Min Carbon",
+    "version": 1,
+    "status": "active",
+    "weights": {
+      "quality": 0.35,
+      "yield": 0.35,
+      "energy": 0.3
+    },
+    "optimal_params": {
+      "Granulation_Time": 12.0,
+      "Binder_Amount": 7.3,
+      "Drying_Temp": 66.0,
+      "Drying_Time": 20.0,
+      "Compression_Force": 15.2,
+      "Machine_Speed": 122.0,
+      "Lubricant_Conc": 0.6
+    },
+    "benchmark_scores": {
+      "Quality_Score": 83.182,
+      "Yield_Score": 50.521,
+      "Total_Energy_kWh": 75.724,
+      "Carbon_kg_CO2": 62.094,
+      "Performance_Score": 75.451,
+      "composite_score": 0.8276
+    },
+    "source_batch": "T046",
+    "pareto_solutions": 13,
+    "pareto_front": [
+      {
+        "batch_id": "T002",
+        "quality": 83.73,
+        "yield": 49.39,
+        "energy": 88.14,
+        "carbon": 72.27
+      },
+      {
+        "batch_id": "T009",
+        "quality": 81.05,
+        "yield": 53.12,
+        "energy": 98.63,
+        "carbon": 80.87
+      },
+      {
+        "batch_id": "T012",
+        "quality": 68.69,
+        "yield": 56.42,
+        "energy": 106.39,
+        "carbon": 87.24
+      },
+      {
+        "batch_id": "T017",
+        "quality": 82.84,
+        "yield": 50.95,
+        "energy": 77.8,
+        "carbon": 63.79
+      },
+      {
+        "batch_id": "T023",
+        "quality": 65.53,
+        "yield": 56.6,
+        "energy": 80.33,
+        "carbon": 65.87
+      },
+      {
+        "batch_id": "T024",
+        "quality": 79.17,
+        "yield": 54.69,
+        "energy": 75.87,
+        "carbon": 62.21
+      },
+      {
+        "batch_id": "T028",
+        "quality": 82.2,
+        "yield": 52.08,
+        "energy": 85.88,
+        "carbon": 70.42
+      },
+      {
+        "batch_id": "T033",
+        "quality": 82.18,
+        "yield": 52.52,
+        "energy": 85.86,
+        "carbon": 70.4
+      },
+      {
+        "batch_id": "T038",
+        "quality": 72.57,
+        "yield": 52.52,
+        "energy": 73.08,
+        "carbon": 59.93
+      },
+      {
+        "batch_id": "T046",
+        "quality": 83.18,
+        "yield": 50.52,
+        "energy": 75.72,
+        "carbon": 62.09
+      },
+      {
+        "batch_id": "T048",
+        "quality": 83.43,
+        "yield": 51.48,
+        "energy": 77.98,
+        "carbon": 63.94
+      },
+      {
+        "batch_id": "T055",
+        "quality": 79.3,
+        "yield": 52.0,
+        "energy": 80.66,
+        "carbon": 66.14
+      },
+      {
+        "batch_id": "T059",
+        "quality": 83.18,
+        "yield": 51.82,
+        "energy": 100.37,
+        "carbon": 82.31
+      }
+    ]
+  }
+}

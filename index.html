@@ -1,0 +1,1853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AuraOptima AI — Golden Signature Intelligence</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #080c10;
+    --surface:  #0d1117;
+    --card:     #111820;
+    --border:   #1e2d3d;
+    --accent:   #00e5ff;
+    --accent2:  #39ff14;
+    --warn:     #ffb300;
+    --danger:   #ff3d57;
+    --text:     #e8f0fe;
+    --muted:    #6b7a8d;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    overflow-x: hidden;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── LAYOUT ── */
+  .shell { display: flex; height: 100vh; }
+  .sidebar {
+    width: 220px; min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    padding: 24px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .sidebar::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+  }
+  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+  /* ── SIDEBAR LOGO ── */
+  .logo-block { padding: 0 20px 24px; border-bottom: 1px solid var(--border); }
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: 10px;
+  }
+  .logo-name {
+    font-family: var(--font-mono);
+    font-size: 13px; font-weight: 700;
+    color: var(--accent); letter-spacing: 1px;
+  }
+  .logo-sub { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ── NAV ── */
+  .nav { padding: 16px 0; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px; cursor: pointer;
+    font-size: 13px; color: var(--muted);
+    transition: all 0.15s; border-left: 2px solid transparent;
+    user-select: none;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(0,229,255,0.04); }
+  .nav-item.active {
+    color: var(--accent); background: rgba(0,229,255,0.08);
+    border-left-color: var(--accent);
+  }
+  .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+
+  /* ── MODE SELECTOR ── */
+  .mode-block { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .mode-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .mode-btn {
+    display: block; width: 100%; padding: 8px 10px; margin-bottom: 4px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--muted); font-size: 12px;
+    cursor: pointer; text-align: left; transition: all 0.15s;
+    font-family: var(--font-body);
+  }
+  .mode-btn:hover { border-color: var(--accent); color: var(--text); }
+  .mode-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.08); }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-title { font-family: var(--font-mono); font-size: 14px; color: var(--text); }
+  .topbar-badges { display: flex; gap: 8px; }
+  .badge {
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 500; font-family: var(--font-mono);
+  }
+  .badge-cyan  { background: rgba(0,229,255,0.12); color: var(--accent); border: 1px solid rgba(0,229,255,0.3); }
+  .badge-green { background: rgba(57,255,20,0.10); color: var(--accent2); border: 1px solid rgba(57,255,20,0.3); }
+  .badge-warn  { background: rgba(255,179,0,0.12); color: var(--warn); border: 1px solid rgba(255,179,0,0.3); }
+  .badge-danger{ background: rgba(255,61,87,0.12); color: var(--danger); border: 1px solid rgba(255,61,87,0.3); }
+
+  /* ── PAGE ── */
+  .page { padding: 28px 32px; flex: 1; }
+  .page-title { font-family: var(--font-mono); font-size: 20px; color: var(--text); margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+  }
+  .card-title { font-family: var(--font-mono); font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+
+  /* ── GRID ── */
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 20px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 20px; }
+
+  /* ── KPI CARD ── */
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .kpi-value { font-family: var(--font-mono); font-size: 26px; font-weight: 700; color: var(--text); }
+  .kpi-delta { font-size: 12px; margin-top: 4px; }
+  .kpi-delta.pos { color: var(--accent2); }
+  .kpi-delta.neg { color: var(--danger); }
+  .kpi-delta.neu { color: var(--muted); }
+
+  /* ── STATUS PILL ── */
+  .status { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .status.HEALTHY { background: rgba(57,255,20,0.12); color: var(--accent2); }
+  .status.WARNING { background: rgba(255,179,0,0.12); color: var(--warn); }
+  .status.CRITICAL{ background: rgba(255,61,87,0.12); color: var(--danger); }
+
+  /* ── DEVIATION BAR ── */
+  .dev-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .dev-label { font-family: var(--font-mono); font-size: 11px; color: var(--muted); width: 160px; flex-shrink: 0; }
+  .dev-bar-wrap { flex: 1; height: 6px; background: var(--border); border-radius: 3px; position: relative; overflow: hidden; }
+  .dev-bar { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+  .dev-pct { font-family: var(--font-mono); font-size: 11px; width: 60px; text-align: right; flex-shrink: 0; }
+  .dev-rec { font-size: 11px; color: var(--muted); margin-top: 2px; margin-left: 172px; margin-bottom: 6px; }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { padding: 10px 12px; text-align: left; font-family: var(--font-mono); font-size: 11px; color: var(--muted); border-bottom: 1px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid rgba(30,45,61,0.5); }
+  tr:hover td { background: rgba(0,229,255,0.03); }
+
+  /* ── SELECT / INPUT ── */
+  select, input {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: 6px;
+    font-family: var(--font-body); font-size: 13px; outline: none;
+    cursor: pointer; transition: border-color 0.15s;
+  }
+  select:hover, input:hover, select:focus, input:focus { border-color: var(--accent); }
+
+  /* ── BUTTON ── */
+  .btn {
+    padding: 8px 16px; border-radius: 6px; border: 1px solid;
+    font-family: var(--font-body); font-size: 13px; cursor: pointer;
+    transition: all 0.15s; font-weight: 500;
+  }
+  .btn-cyan { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.08); }
+  .btn-cyan:hover { background: rgba(0,229,255,0.18); }
+  .btn-green { border-color: var(--accent2); color: var(--accent2); background: rgba(57,255,20,0.08); }
+  .btn-green:hover { background: rgba(57,255,20,0.18); }
+  .btn-danger { border-color: var(--danger); color: var(--danger); background: rgba(255,61,87,0.08); }
+  .btn-danger:hover { background: rgba(255,61,87,0.18); }
+
+  /* ── PROGRESS ── */
+  .progress-wrap { background: var(--border); border-radius: 4px; height: 8px; overflow: hidden; }
+  .progress-bar  { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+
+  /* ── LOADING ── */
+  .loading { text-align: center; padding: 60px; color: var(--muted); font-family: var(--font-mono); font-size: 13px; }
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── PLOTLY DARK ── */
+  .js-plotly-plot .plotly .bg { fill: transparent !important; }
+
+  /* ── ACTIONS LIST ── */
+  .action-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 16px; border-radius: 8px; margin-bottom: 8px;
+    border: 1px solid;
+  }
+  .action-item.CRITICAL { border-color: rgba(255,61,87,0.3); background: rgba(255,61,87,0.05); }
+  .action-item.WARNING  { border-color: rgba(255,179,0,0.3);  background: rgba(255,179,0,0.05); }
+  .action-item.OK       { border-color: rgba(57,255,20,0.2);  background: rgba(57,255,20,0.04); }
+
+  /* ── PROPOSAL CARD ── */
+  .proposal-card {
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px; margin-bottom: 12px; background: var(--card);
+  }
+  .proposal-card.PENDING { border-left: 3px solid var(--warn); }
+  .proposal-card.ACCEPTED{ border-left: 3px solid var(--accent2); }
+  .proposal-card.REJECTED{ border-left: 3px solid var(--muted); }
+
+  /* ── PARETO BADGE ── */
+  .pareto-dot {
+    display: inline-block; width: 8px; height: 8px;
+    border-radius: 50%; margin-right: 6px;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  textarea {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: 6px;
+    font-family: var(--font-body); font-size: 13px; outline: none;
+    resize: vertical; width: 100%;
+  }
+  textarea:focus { border-color: var(--accent); }
+
+  .sig-param { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(30,45,61,0.5); font-size: 13px; }
+  .sig-param:last-child { border-bottom: none; }
+  .sig-param-name { color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
+  .sig-param-val  { color: var(--accent); font-family: var(--font-mono); font-size: 12px; }
+
+  /* ── CHAT PANEL ── */
+  .chat-fab {
+    position: fixed; bottom: 24px; right: 24px; z-index: 1000;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 24px; box-shadow: 0 4px 20px rgba(0,229,255,0.3);
+    transition: all 0.3s ease; color: #080c10;
+  }
+  .chat-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(0,229,255,0.5); }
+  .chat-fab.open { border-radius: 12px; }
+  .chat-fab-pulse {
+    position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    background: rgba(0,229,255,0.3); animation: fabpulse 2s ease-out infinite;
+  }
+  @keyframes fabpulse {
+    0%   { transform: scale(1);   opacity: 0.5; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+
+  .chat-panel {
+    position: fixed; bottom: 92px; right: 24px; z-index: 999;
+    width: 420px; height: 560px; max-height: calc(100vh - 120px);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; display: flex; flex-direction: column;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+    animation: chatSlideIn 0.3s ease;
+    overflow: hidden;
+  }
+  @keyframes chatSlideIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .chat-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--card);
+  }
+  .chat-header-title {
+    font-family: var(--font-mono); font-size: 13px; color: var(--accent);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .chat-header-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--accent2);
+    animation: dotpulse 1.5s ease-in-out infinite;
+  }
+  @keyframes dotpulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .chat-close {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 18px; padding: 4px; border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .chat-close:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 16px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .chat-msg {
+    max-width: 88%; padding: 10px 14px; border-radius: 12px;
+    font-size: 13px; line-height: 1.5; word-wrap: break-word;
+  }
+  .chat-msg.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(0,229,255,0.15), rgba(0,102,255,0.15));
+    border: 1px solid rgba(0,229,255,0.25); color: var(--text);
+    border-bottom-right-radius: 4px;
+  }
+  .chat-msg.assistant {
+    align-self: flex-start;
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text);
+    border-bottom-left-radius: 4px;
+  }
+  .chat-msg.assistant p { margin: 0 0 8px; }
+  .chat-msg.assistant p:last-child { margin-bottom: 0; }
+  .chat-msg.assistant strong { color: var(--accent); }
+  .chat-msg.assistant ul, .chat-msg.assistant ol { margin: 4px 0 8px 16px; padding: 0; }
+  .chat-msg.assistant li { margin-bottom: 4px; }
+  .chat-msg.assistant code {
+    background: rgba(0,229,255,0.1); padding: 1px 5px; border-radius: 3px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+  }
+
+  .chat-typing {
+    align-self: flex-start; padding: 12px 16px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; border-bottom-left-radius: 4px;
+    display: flex; gap: 4px; align-items: center;
+  }
+  .chat-typing-dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+    animation: typingBounce 1.4s ease-in-out infinite;
+  }
+  .chat-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .chat-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%,60%,100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  .chat-chips {
+    padding: 8px 16px; display: flex; gap: 6px; flex-wrap: wrap;
+    border-top: 1px solid var(--border);
+  }
+  .chat-chip {
+    padding: 5px 10px; border-radius: 20px;
+    background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.2);
+    color: var(--accent); font-size: 11px; cursor: pointer;
+    transition: all 0.15s; font-family: var(--font-body); white-space: nowrap;
+  }
+  .chat-chip:hover { background: rgba(0,229,255,0.18); border-color: var(--accent); }
+
+  .chat-input-area {
+    padding: 12px 16px; border-top: 1px solid var(--border);
+    display: flex; gap: 8px; background: var(--card);
+  }
+  .chat-input {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 10px 14px; border-radius: 10px;
+    font-family: var(--font-body); font-size: 13px; outline: none;
+    resize: none; min-height: 40px; max-height: 80px;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--muted); }
+  .chat-send {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), #0066ff);
+    border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: #080c10; transition: all 0.15s;
+    flex-shrink: 0; align-self: flex-end;
+  }
+  .chat-send:hover { transform: scale(1.05); }
+  .chat-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── AI INSIGHT BANNER ── */
+  .ai-insight {
+    background: linear-gradient(135deg, rgba(0,229,255,0.06), rgba(0,102,255,0.06));
+    border: 1px solid rgba(0,229,255,0.2);
+    border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
+    position: relative; overflow: hidden;
+  }
+  .ai-insight::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), #0066ff, var(--accent2));
+  }
+  .ai-insight-header {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    font-family: var(--font-mono); font-size: 11px; color: var(--accent);
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+  .ai-insight-body { font-size: 13px; line-height: 1.6; color: var(--text); }
+  .ai-insight-body p { margin: 0 0 6px; }
+  .ai-insight-body p:last-child { margin-bottom: 0; }
+  .ai-insight-body strong { color: var(--accent); }
+  .ai-insight-body ul, .ai-insight-body ol { margin: 4px 0 8px 16px; padding: 0; }
+  .ai-insight-body li { margin-bottom: 4px; }
+  .ai-insight-loading {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--muted); font-size: 12px; font-family: var(--font-mono);
+  }
+
+  /* ── FLEET HEALTH BANNER ── */
+  .fleet-health {
+    display: flex; align-items: center; gap: 16px;
+    padding: 6px 16px; border-radius: 8px;
+    background: rgba(0,229,255,0.04); border: 1px solid var(--border);
+  }
+  .fleet-donut {
+    position: relative; width: 40px; height: 40px;
+  }
+  .fleet-donut svg { transform: rotate(-90deg); }
+  .fleet-donut-label {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-family: var(--font-mono); font-size: 9px; font-weight: 700; color: var(--text);
+  }
+  .fleet-stat { display: flex; align-items: center; gap: 4px; font-size: 11px; font-family: var(--font-mono); }
+  .fleet-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .fleet-count { font-weight: 700; }
+
+  /* ── SIMULATOR SLIDERS ── */
+  .sim-slider-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; margin-bottom: 6px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .sim-slider-label {
+    font-family: var(--font-mono); font-size: 11px; color: var(--muted);
+    width: 160px; flex-shrink: 0;
+  }
+  .sim-slider-label span { display: block; color: var(--text); font-size: 13px; margin-top: 2px; }
+  .sim-slider {
+    flex: 1; -webkit-appearance: none; appearance: none;
+    height: 4px; background: var(--border); border-radius: 2px;
+    outline: none; cursor: pointer;
+  }
+  .sim-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent); cursor: pointer;
+    box-shadow: 0 0 8px rgba(0,229,255,0.4);
+    transition: transform 0.1s;
+  }
+  .sim-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+  .sim-slider-val {
+    font-family: var(--font-mono); font-size: 12px;
+    color: var(--accent); width: 50px; text-align: right;
+  }
+  .sim-golden-tag {
+    font-size: 9px; color: var(--accent2); background: rgba(57,255,20,0.1);
+    padding: 1px 6px; border-radius: 10px; border: 1px solid rgba(57,255,20,0.2);
+  }
+
+  /* ── ROI HERO CARD ── */
+  .roi-hero {
+    background: linear-gradient(135deg, rgba(57,255,20,0.06), rgba(0,229,255,0.06));
+    border: 1px solid rgba(57,255,20,0.2); border-radius: 14px;
+    padding: 24px 28px; margin-bottom: 20px; text-align: center;
+    position: relative; overflow: hidden;
+  }
+  .roi-hero::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent), var(--accent2));
+  }
+  .roi-hero-amount {
+    font-family: var(--font-mono); font-size: 42px; font-weight: 700;
+    color: var(--accent2); margin: 8px 0;
+    text-shadow: 0 0 30px rgba(57,255,20,0.3);
+  }
+  .roi-hero-sub { font-size: 14px; color: var(--muted); }
+
+  /* ── PULSE ANIMATION ── */
+  @keyframes critPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .crit-pulse { animation: critPulse 1.5s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+const API = "http://localhost:8000";
+
+// ── API HOOK ─────────────────────────────────────────────
+function useApi(endpoint, deps = []) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  useEffect(() => {
+    if (!endpoint) return;
+    setLoading(true);
+    fetch(`${API}${endpoint}`)
+      .then(r => { if (!r.ok) throw new Error(r.statusText); return r.json(); })
+      .then(d => { setData(d); setLoading(false); })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, deps);
+  return { data, loading, error };
+}
+
+// ── PLOTLY WRAPPER ───────────────────────────────────────
+function Plot({ data, layout, style }) {
+  const ref = useRef();
+  useEffect(() => {
+    if (!ref.current) return;
+    const L = {
+      paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+      font: { color: '#e8f0fe', family: 'DM Sans' },
+      xaxis: { gridcolor: '#1e2d3d', zerolinecolor: '#1e2d3d' },
+      yaxis: { gridcolor: '#1e2d3d', zerolinecolor: '#1e2d3d' },
+      margin: { t: 32, r: 16, b: 48, l: 48 },
+      legend: { bgcolor: 'transparent' },
+      ...layout
+    };
+    Plotly.newPlot(ref.current, data, L, { responsive: true, displayModeBar: false });
+  }, [data, layout]);
+  return <div ref={ref} style={style || { width: '100%', height: 340 }} />;
+}
+
+// ── LOADING ──────────────────────────────────────────────
+function Loading({ text = 'Loading...' }) {
+  return <div className="loading"><div className="spinner" />{text}</div>;
+}
+
+// ── STATUS PILL ──────────────────────────────────────────
+function StatusPill({ status }) {
+  const icons = { HEALTHY: '●', WARNING: '◐', CRITICAL: '◉' };
+  return <span className={`status ${status}`}>{icons[status]} {status}</span>;
+}
+
+// ── SIMPLE MARKDOWN RENDERER ─────────────────────────────
+function renderMarkdown(text) {
+  if (!text) return '';
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/^### (.+)$/gm, '<strong style="color:#00e5ff;font-size:14px">$1</strong>')
+    .replace(/^## (.+)$/gm, '<strong style="color:#00e5ff;font-size:15px">$1</strong>')
+    .replace(/^# (.+)$/gm, '<strong style="color:#00e5ff;font-size:16px">$1</strong>')
+    .replace(/^- (.+)$/gm, '• $1')
+    .replace(/^(\d+)\. (.+)$/gm, '$1. $2')
+    .replace(/\n/g, '<br/>');
+}
+
+// ── AI INSIGHT BANNER ────────────────────────────────────
+function AIInsight({ batchId, mode }) {
+  const [insight, setInsight] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const prevRef = useRef('');
+
+  useEffect(() => {
+    const key = `${batchId}-${mode}`;
+    if (!batchId || key === prevRef.current) return;
+    prevRef.current = key;
+    setLoading(true);
+    setError(null);
+    fetch(`${API}/insights/${batchId}?mode=${mode}`)
+      .then(r => {
+        if (!r.ok) throw new Error('Failed to generate insight');
+        return r.json();
+      })
+      .then(d => { setInsight(d); setLoading(false); })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, [batchId, mode]);
+
+  if (error) return null;
+
+  return (
+    <div className="ai-insight">
+      <div className="ai-insight-header">
+        <span>🤖</span> AI Analysis
+        {insight && <span style={{ color: '#6b7a8d', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}> — {insight.batch_id}</span>}
+      </div>
+      {loading ? (
+        <div className="ai-insight-loading">
+          <div className="spinner" style={{ width: 16, height: 16, borderWidth: 1.5, margin: 0 }} />
+          Analyzing batch {batchId}...
+        </div>
+      ) : insight ? (
+        <div className="ai-insight-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(insight.insight) }} />
+      ) : null}
+    </div>
+  );
+}
+
+// ── CHAT PANEL ───────────────────────────────────────────
+function ChatPanel({ isOpen, onClose }) {
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: "👋 Hi! I'm **AuraOptima AI**. Ask me anything about your batch data, golden signatures, energy savings, or quality optimization.\n\nTry one of the suggestions below, or type your own question!" }
+  ]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  useEffect(scrollToBottom, [messages, loading]);
+
+  const quickChips = [
+    "Which batch has the best quality?",
+    "How can I reduce carbon emissions?",
+    "Summarize fleet performance",
+    "Compare top vs bottom batches",
+    "Explain the balanced golden signature",
+  ];
+
+  const sendMessage = async (text) => {
+    if (!text.trim() || loading) return;
+    const userMsg = { role: 'user', content: text.trim() };
+    const newMessages = [...messages, userMsg];
+    setMessages(newMessages);
+    setInput('');
+    setLoading(true);
+
+    try {
+      // Build history (skip the initial greeting)
+      const history = newMessages
+        .slice(1)
+        .filter((m, i) => i < newMessages.length - 2) // exclude the last user message
+        .map(m => ({ role: m.role, content: m.content }));
+
+      const res = await fetch(`${API}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text.trim(), history })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Chat request failed');
+      }
+
+      const data = await res.json();
+      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ Error: ${err.message}` }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="chat-panel">
+      <div className="chat-header">
+        <div className="chat-header-title">
+          <div className="chat-header-dot" />
+          AuraOptima AI
+        </div>
+        <button className="chat-close" onClick={onClose}>✕</button>
+      </div>
+
+      <div className="chat-messages">
+        {messages.map((msg, i) => (
+          <div key={i} className={`chat-msg ${msg.role}`}
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
+        ))}
+        {loading && (
+          <div className="chat-typing">
+            <div className="chat-typing-dot" />
+            <div className="chat-typing-dot" />
+            <div className="chat-typing-dot" />
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {messages.length <= 1 && (
+        <div className="chat-chips">
+          {quickChips.map((chip, i) => (
+            <button key={i} className="chat-chip" onClick={() => sendMessage(chip)}>{chip}</button>
+          ))}
+        </div>
+      )}
+
+      <div className="chat-input-area">
+        <textarea
+          className="chat-input"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about your batches..."
+          rows={1}
+        />
+        <button className="chat-send" onClick={() => sendMessage(input)} disabled={loading || !input.trim()}>➤</button>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB 1 — BATCH MONITOR
+// ══════════════════════════════════════════════════════════
+function BatchMonitor({ activeMode }) {
+  const { data: batches } = useApi('/batches', []);
+  const [batchId, setBatchId] = useState('T046');
+  const [mode, setMode] = useState(activeMode);
+  const [report, setReport] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
+
+  useEffect(() => { setMode(activeMode); }, [activeMode]);
+
+  useEffect(() => {
+    if (!batchId) return;
+    setLoadingReport(true);
+    fetch(`${API}/deviation/${batchId}?mode=${mode}`)
+      .then(r => r.json()).then(d => { setReport(d); setLoadingReport(false); });
+  }, [batchId, mode]);
+
+  const batchIds = batches ? batches.map(b => b.Batch_ID) : [];
+
+  const devColor = (sev) => ({ OK: '#39ff14', WARNING: '#ffb300', CRITICAL: '#ff3d57' }[sev] || '#555');
+
+  return (
+    <div className="page">
+      <div className="page-title">📊 Batch Monitor</div>
+      <div className="page-sub">Real-time parameter deviation vs. active golden signature</div>
+
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
+        <select value={batchId} onChange={e => setBatchId(e.target.value)} style={{ width: 140 }}>
+          {batchIds.map(id => <option key={id}>{id}</option>)}
+        </select>
+        <select value={mode} onChange={e => setMode(e.target.value)} style={{ width: 160 }}>
+          <option value="balanced">⚖️ Balanced</option>
+          <option value="quality">🏆 Quality First</option>
+          <option value="energy">⚡ Energy First</option>
+        </select>
+        {report && <StatusPill status={report.overall_status} />}
+        <button
+          className="btn btn-cyan"
+          style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}
+          onClick={() => {
+            const link = document.createElement('a');
+            link.href = `${API}/report/${batchId}?mode=${mode}`;
+            link.download = `AuraOptima_Report_${batchId}_${mode}.pdf`;
+            link.click();
+          }}
+        >
+          📄 Download Report
+        </button>
+      </div>
+
+      {loadingReport ? <Loading /> : report && <>
+        {/* AI Insight */}
+        <AIInsight batchId={batchId} mode={mode} />
+
+        {/* KPIs */}
+        <div className="grid-4">
+          {[
+            { label: 'Critical Params', value: report.summary.critical_params, color: report.summary.critical_params > 0 ? '#ff3d57' : '#39ff14' },
+            { label: 'Warning Params',  value: report.summary.warning_params,  color: report.summary.warning_params > 0 ? '#ffb300' : '#39ff14' },
+            { label: 'Energy Savings',  value: `${report.savings_potential.energy_savings_kWh.toFixed(1)} kWh`, color: '#00e5ff' },
+            { label: 'Carbon Savings',  value: `${report.savings_potential.carbon_savings_kg.toFixed(1)} kg`, color: '#39ff14' },
+          ].map(k => (
+            <div className="kpi" key={k.label}>
+              <div className="kpi-label">{k.label}</div>
+              <div className="kpi-value" style={{ color: k.color, fontSize: 22 }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid-2">
+          {/* Deviation Chart */}
+          <div className="card">
+            <div className="card-title">Parameter Deviation %</div>
+            <Plot
+              data={[{
+                type: 'bar',
+                x: Object.keys(report.param_analysis),
+                y: Object.values(report.param_analysis).map(p => p.deviation_pct),
+                marker: { color: Object.values(report.param_analysis).map(p => devColor(p.severity)) },
+                text: Object.values(report.param_analysis).map(p => `${p.deviation_pct > 0 ? '+' : ''}${p.deviation_pct.toFixed(1)}%`),
+                textposition: 'outside',
+              }]}
+              layout={{
+                shapes: [
+                  { type: 'line', x0: -0.5, x1: 6.5, y0: 20,  y1: 20,  line: { color: '#ff3d57', dash: 'dash', width: 1 } },
+                  { type: 'line', x0: -0.5, x1: 6.5, y0: -20, y1: -20, line: { color: '#ff3d57', dash: 'dash', width: 1 } },
+                  { type: 'line', x0: -0.5, x1: 6.5, y0: 10,  y1: 10,  line: { color: '#ffb300', dash: 'dot',  width: 1 } },
+                  { type: 'line', x0: -0.5, x1: 6.5, y0: -10, y1: -10, line: { color: '#ffb300', dash: 'dot',  width: 1 } },
+                ],
+                xaxis: { tickangle: -30, tickfont: { size: 10 } },
+                yaxis: { title: 'Deviation (%)' },
+              }}
+              style={{ width: '100%', height: 300 }}
+            />
+          </div>
+
+          {/* Outcome Comparison */}
+          <div className="card">
+            <div className="card-title">Outcome vs Golden Signature</div>
+            {Object.entries(report.outcome_comparison).map(([key, val]) => {
+              const higherBetter = key !== 'Total_Energy_kWh' && key !== 'Carbon_kg_CO2';
+              const good = higherBetter ? val.gap >= 0 : val.gap <= 0;
+              return (
+                <div key={key} style={{ marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6, fontSize: 13 }}>
+                    <span style={{ color: '#6b7a8d', fontFamily: 'Space Mono', fontSize: 11 }}>{key.replace(/_/g,' ')}</span>
+                    <span style={{ color: good ? '#39ff14' : '#ff3d57' }}>
+                      {val.gap > 0 ? '+' : ''}{val.gap.toFixed(2)} {val.status}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <div className="progress-wrap" style={{ flex: 1 }}>
+                      <div className="progress-bar" style={{
+                        width: `${Math.min(100, (val.batch / Math.max(val.batch, val.golden)) * 100)}%`,
+                        background: good ? '#39ff14' : '#ff3d57'
+                      }} />
+                    </div>
+                    <span style={{ fontFamily: 'Space Mono', fontSize: 11, width: 60, textAlign: 'right' }}>{val.batch.toFixed(1)}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Top Actions */}
+        <div className="card">
+          <div className="card-title">Top Recommendations</div>
+          {report.top_actions.length === 0
+            ? <div style={{ color: '#39ff14', fontFamily: 'Space Mono', fontSize: 13 }}>✓ All parameters within optimal range</div>
+            : report.top_actions.map((a, i) => (
+              <div key={i} className={`action-item ${a.severity}`}>
+                <span style={{ fontSize: 16, marginTop: 1 }}>
+                  {a.severity === 'CRITICAL' ? '🔴' : '🟡'}
+                </span>
+                <div>
+                  <div style={{ fontFamily: 'Space Mono', fontSize: 12, marginBottom: 4 }}>{a.parameter}</div>
+                  <div style={{ fontSize: 13, color: '#e8f0fe' }}>{a.action}</div>
+                  <div style={{ fontSize: 11, color: '#6b7a8d', marginTop: 2 }}>Deviation: {a.deviation > 0 ? '+' : ''}{a.deviation.toFixed(1)}%</div>
+                </div>
+              </div>
+            ))
+          }
+          {report.savings_potential.energy_savings_kWh > 0 &&
+            <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(0,229,255,0.06)', borderRadius: 8, fontSize: 13, color: '#00e5ff', border: '1px solid rgba(0,229,255,0.2)' }}>
+              💡 {report.savings_potential.message}
+            </div>
+          }
+        </div>
+      </>}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB 2 — OPTIMIZATION ENGINE
+// ══════════════════════════════════════════════════════════
+function OptimizationEngine({ activeMode }) {
+  const [mode, setMode] = useState(activeMode);
+  useEffect(() => setMode(activeMode), [activeMode]);
+
+  const { data: optData, loading } = useApi(`/optimize`, []);
+  const [modeData, setModeData] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API}/optimize`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode })
+    }).then(r => r.json()).then(setModeData);
+  }, [mode]);
+
+  const { data: rankings } = useApi(`/rankings?mode=${mode}`, [mode]);
+
+  return (
+    <div className="page">
+      <div className="page-title">🧬 Optimization Engine</div>
+      <div className="page-sub">Multi-objective Pareto analysis on 60 real batches</div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {[['energy','⚡ Energy First'],['quality','🏆 Quality First'],['balanced','⚖️ Balanced']].map(([m, label]) => (
+          <button key={m} className={`btn ${mode===m ? 'btn-cyan' : ''}`}
+            style={{ borderColor: mode===m ? 'var(--accent)' : 'var(--border)', color: mode===m ? 'var(--accent)' : 'var(--muted)' }}
+            onClick={() => setMode(m)}>{label}</button>
+        ))}
+      </div>
+
+      {loading || !modeData ? <Loading /> : <>
+        {/* Signature Summary */}
+        <div className="grid-4" style={{ marginBottom: 20 }}>
+          {[
+            { label: 'Source Batch',   value: modeData.source_batch },
+            { label: 'Quality Score',  value: modeData.benchmark.Quality_Score?.toFixed(1) },
+            { label: 'Energy (kWh)',   value: modeData.benchmark.Total_Energy_kWh?.toFixed(1) },
+            { label: 'Pareto Solutions', value: modeData.pareto_count },
+          ].map(k => (
+            <div className="kpi" key={k.label}>
+              <div className="kpi-label">{k.label}</div>
+              <div className="kpi-value" style={{ fontSize: 20 }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid-2">
+          {/* Pareto Scatter */}
+          <div className="card">
+            <div className="card-title">Pareto Front — Quality vs Energy</div>
+            {modeData.pareto_front && (
+              <Plot
+                data={[
+                  {
+                    type: 'scatter', mode: 'markers', name: 'All Batches',
+                    x: modeData.pareto_front.map(p => p.energy),
+                    y: modeData.pareto_front.map(p => p.quality),
+                    text: modeData.pareto_front.map(p => p.batch_id),
+                    marker: { color: '#1e2d3d', size: 8, line: { color: '#00e5ff', width: 1 } },
+                    hovertemplate: '<b>%{text}</b><br>Energy: %{x:.1f} kWh<br>Quality: %{y:.1f}<extra></extra>'
+                  },
+                  {
+                    type: 'scatter', mode: 'markers+text', name: 'Pareto Optimal',
+                    x: modeData.pareto_front.filter(p=>p).map(p => p.energy),
+                    y: modeData.pareto_front.filter(p=>p).map(p => p.quality),
+                    text: modeData.pareto_front.map(p => p.batch_id),
+                    textposition: 'top center',
+                    marker: { color: '#00e5ff', size: 10, symbol: 'diamond' },
+                    hovertemplate: '<b>%{text}</b><br>Energy: %{x:.1f}<br>Quality: %{y:.1f}<extra></extra>'
+                  },
+                  {
+                    type: 'scatter', mode: 'markers', name: 'Golden Signature',
+                    x: [modeData.benchmark.Total_Energy_kWh],
+                    y: [modeData.benchmark.Quality_Score],
+                    marker: { color: '#39ff14', size: 14, symbol: 'star' },
+                    hovertemplate: `<b>Golden: ${modeData.source_batch}</b><extra></extra>`
+                  }
+                ]}
+                layout={{ xaxis: { title: 'Energy (kWh)' }, yaxis: { title: 'Quality Score' }, showlegend: true }}
+              />
+            )}
+          </div>
+
+          {/* Optimal Parameters */}
+          <div className="card">
+            <div className="card-title">Optimal Parameters — {modeData.source_batch}</div>
+            {Object.entries(modeData.optimal_params).map(([param, val]) => (
+              <div className="sig-param" key={param}>
+                <span className="sig-param-name">{param.replace(/_/g,' ')}</span>
+                <span className="sig-param-val">{val}</span>
+              </div>
+            ))}
+            <hr className="divider" />
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 8 }}>
+              {[
+                ['Quality', modeData.benchmark.Quality_Score?.toFixed(2), '#00e5ff'],
+                ['Yield',   modeData.benchmark.Yield_Score?.toFixed(2),   '#39ff14'],
+                ['Energy',  modeData.benchmark.Total_Energy_kWh?.toFixed(2)+' kWh', '#ffb300'],
+                ['Carbon',  modeData.benchmark.Carbon_kg_CO2?.toFixed(2)+' kg', '#ff3d57'],
+              ].map(([label, val, color]) => (
+                <div key={label} style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, color: '#6b7a8d', fontFamily: 'Space Mono' }}>{label}</div>
+                  <div style={{ fontFamily: 'Space Mono', fontSize: 14, color, marginTop: 2 }}>{val}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Batch Rankings */}
+        {rankings && (
+          <div className="card">
+            <div className="card-title">Batch Similarity Rankings</div>
+            <table>
+              <thead>
+                <tr><th>Batch</th><th>Similarity</th><th>Quality</th><th>Yield</th><th>Energy (kWh)</th><th>Carbon (kg)</th><th>Perf Score</th></tr>
+              </thead>
+              <tbody>
+                {rankings.slice(0,15).map((r, i) => (
+                  <tr key={r.Batch_ID}>
+                    <td><span style={{ fontFamily: 'Space Mono', fontSize: 12 }}>{r.Batch_ID}</span></td>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div className="progress-wrap" style={{ width: 80 }}>
+                          <div className="progress-bar" style={{
+                            width: `${r.similarity_pct}%`,
+                            background: r.similarity_pct > 80 ? '#39ff14' : r.similarity_pct > 50 ? '#ffb300' : '#ff3d57'
+                          }} />
+                        </div>
+                        <span style={{ fontFamily: 'Space Mono', fontSize: 11 }}>{r.similarity_pct}%</span>
+                      </div>
+                    </td>
+                    <td>{r.Quality_Score}</td>
+                    <td>{r.Yield_Score}</td>
+                    <td>{r.Energy_kWh}</td>
+                    <td>{r.Carbon_kg}</td>
+                    <td>{r.Perf_Score}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </>}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB 3 — HITL MANAGER
+// ══════════════════════════════════════════════════════════
+function HITLManager() {
+  const [proposals, setProposals] = useState({});
+  const [decisions, setDecisions] = useState(null);
+  const [sigs, setSigs] = useState(null);
+  const [note, setNote] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const refresh = () => {
+    fetch(`${API}/proposals`).then(r=>r.json()).then(setProposals);
+    fetch(`${API}/decisions`).then(r=>r.json()).then(setDecisions);
+    fetch(`${API}/golden-signatures`).then(r=>r.json()).then(setSigs);
+  };
+  useEffect(refresh, []);
+
+  const act = (proposalId, action) => {
+    fetch(`${API}/approve-update`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ proposal_id: proposalId, action, reviewer_note: note })
+    }).then(r=>r.json()).then(d => {
+      setMsg(`✅ Proposal ${action}ed successfully`);
+      setNote('');
+      refresh();
+    });
+  };
+
+  const pendingList = Object.values(proposals);
+
+  return (
+    <div className="page">
+      <div className="page-title">🧑‍🔬 Human-in-the-Loop Manager</div>
+      <div className="page-sub">Review AI proposals · Approve or reject signature updates · Track decision history</div>
+
+      {msg && (
+        <div style={{ padding: '10px 16px', background: 'rgba(57,255,20,0.08)', border: '1px solid rgba(57,255,20,0.3)', borderRadius: 8, color: '#39ff14', fontSize: 13, marginBottom: 16 }}>
+          {msg}
+        </div>
+      )}
+
+      <div className="grid-3" style={{ marginBottom: 20 }}>
+        {[
+          { label: 'Pending Proposals', value: pendingList.length, color: '#ffb300' },
+          { label: 'Accepted', value: decisions?.accepted ?? '–', color: '#39ff14' },
+          { label: 'Rejected', value: decisions?.rejected ?? '–', color: '#ff3d57' },
+        ].map(k => (
+          <div className="kpi" key={k.label}>
+            <div className="kpi-label">{k.label}</div>
+            <div className="kpi-value" style={{ color: k.color }}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2">
+        {/* Pending Proposals */}
+        <div>
+          <div className="card-title" style={{ marginBottom: 12, fontFamily: 'Space Mono', fontSize: 11, color: '#6b7a8d', textTransform: 'uppercase', letterSpacing: 1 }}>Pending Proposals</div>
+          {pendingList.length === 0
+            ? <div style={{ color: '#39ff14', fontFamily: 'Space Mono', fontSize: 13, padding: '20px 0' }}>✓ No pending proposals</div>
+            : pendingList.map(p => (
+              <div key={p.proposal_id} className="proposal-card PENDING">
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: '#ffb300' }}>{p.proposal_id}</span>
+                  <span className="badge badge-warn">PENDING</span>
+                </div>
+                <div style={{ fontSize: 13, marginBottom: 4 }}>Mode: <strong>{p.mode}</strong> · Batch: <strong>{p.batch_id}</strong></div>
+                <div style={{ fontSize: 13, color: '#39ff14', marginBottom: 12 }}>+{p.improvement_pct}% improvement</div>
+                <textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="Reviewer note (optional)..." rows={2} style={{ marginBottom: 8 }} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button className="btn btn-green" onClick={() => act(p.proposal_id, 'accept')}>✓ Accept</button>
+                  <button className="btn btn-danger" onClick={() => act(p.proposal_id, 'reject')}>✗ Reject</button>
+                </div>
+              </div>
+            ))
+          }
+        </div>
+
+        {/* Active Signatures */}
+        <div>
+          <div className="card-title" style={{ marginBottom: 12, fontFamily: 'Space Mono', fontSize: 11, color: '#6b7a8d', textTransform: 'uppercase', letterSpacing: 1 }}>Active Golden Signatures</div>
+          {sigs && Object.entries(sigs).map(([mode, sig]) => (
+            <div key={mode} className="card" style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ fontFamily: 'Space Mono', fontSize: 12, color: '#00e5ff' }}>{mode.toUpperCase()}</span>
+                <span style={{ fontFamily: 'Space Mono', fontSize: 11, color: '#6b7a8d' }}>v{sig.version || 1} · {sig.source_batch}</span>
+              </div>
+              <div style={{ fontSize: 12, color: '#6b7a8d', marginBottom: 6 }}>{sig.label}</div>
+              <div style={{ display: 'flex', gap: 16 }}>
+                {[
+                  ['Q', sig.benchmark_scores.Quality_Score?.toFixed(1), '#00e5ff'],
+                  ['E', sig.benchmark_scores.Total_Energy_kWh?.toFixed(1)+' kWh', '#ffb300'],
+                  ['C', sig.benchmark_scores.Carbon_kg_CO2?.toFixed(1)+' kg', '#39ff14'],
+                ].map(([lbl, val, color]) => (
+                  <div key={lbl}>
+                    <div style={{ fontSize: 10, color: '#6b7a8d', fontFamily: 'Space Mono' }}>{lbl}</div>
+                    <div style={{ fontFamily: 'Space Mono', fontSize: 13, color }}>{val}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Decision History */}
+      {decisions?.history?.length > 0 && (
+        <div className="card" style={{ marginTop: 8 }}>
+          <div className="card-title">Decision History</div>
+          <table>
+            <thead>
+              <tr><th>Timestamp</th><th>Action</th><th>Mode</th><th>Batch</th><th>Improvement</th><th>Note</th></tr>
+            </thead>
+            <tbody>
+              {[...decisions.history].reverse().map((d, i) => (
+                <tr key={i}>
+                  <td style={{ fontFamily: 'Space Mono', fontSize: 11, color: '#6b7a8d' }}>{new Date(d.timestamp).toLocaleString()}</td>
+                  <td>
+                    <span className={`badge ${d.action==='ACCEPTED'?'badge-green':d.action==='REJECTED'?'badge-danger':'badge-cyan'}`}>
+                      {d.action}
+                    </span>
+                  </td>
+                  <td style={{ fontFamily: 'Space Mono', fontSize: 12 }}>{d.mode || '–'}</td>
+                  <td>{d.batch_id || '–'}</td>
+                  <td style={{ color: '#39ff14' }}>{d.improvement ? `+${d.improvement}%` : '–'}</td>
+                  <td style={{ color: '#6b7a8d', fontSize: 12 }}>{d.reviewer_note || d.reason || '–'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB 4 — CARBON & SUSTAINABILITY
+// ══════════════════════════════════════════════════════════
+function Sustainability() {
+  const { data, loading } = useApi('/sustainability', []);
+
+  if (loading) return <div className="page"><Loading /></div>;
+  if (!data) return null;
+
+  const trend = data.batch_trend || [];
+  const pct = Math.min(100, (data.golden_energy_kWh / data.avg_energy_kWh) * 100);
+
+  return (
+    <div className="page">
+      <div className="page-title">🌿 Carbon & Sustainability</div>
+      <div className="page-sub">Fleet-wide energy consumption and CO₂ emission analysis</div>
+
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        {[
+          { label: 'Total Energy (Fleet)',  value: `${(data.total_energy_kWh/1000).toFixed(1)} MWh`, color: '#ffb300' },
+          { label: 'Total Carbon (Fleet)',  value: `${(data.total_carbon_kg/1000).toFixed(1)} tCO₂`, color: '#ff3d57' },
+          { label: 'Potential Energy Save', value: `${data.potential_energy_savings.toFixed(0)} kWh`, color: '#00e5ff' },
+          { label: 'Potential Carbon Save', value: `${data.potential_carbon_savings.toFixed(0)} kg`, color: '#39ff14' },
+        ].map(k => (
+          <div className="kpi" key={k.label}>
+            <div className="kpi-label">{k.label}</div>
+            <div className="kpi-value" style={{ color: k.color, fontSize: 20 }}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Gauge */}
+      <div className="grid-2" style={{ marginBottom: 20 }}>
+        <div className="card">
+          <div className="card-title">Energy Efficiency vs Golden Target</div>
+          <Plot
+            data={[{
+              type: 'indicator', mode: 'gauge+number+delta',
+              value: data.avg_energy_kWh,
+              delta: { reference: data.golden_energy_kWh, increasing: { color: '#ff3d57' }, decreasing: { color: '#39ff14' } },
+              gauge: {
+                axis: { range: [60, 130], tickcolor: '#6b7a8d' },
+                bar: { color: '#00e5ff' },
+                bgcolor: '#111820',
+                bordercolor: '#1e2d3d',
+                steps: [
+                  { range: [60, data.golden_energy_kWh], color: 'rgba(57,255,20,0.15)' },
+                  { range: [data.golden_energy_kWh, 130], color: 'rgba(255,61,87,0.1)' },
+                ],
+                threshold: { line: { color: '#39ff14', width: 2 }, thickness: 0.75, value: data.golden_energy_kWh }
+              },
+              number: { suffix: ' kWh', font: { color: '#e8f0fe', family: 'Space Mono' } },
+              title: { text: 'Avg Energy per Batch', font: { color: '#6b7a8d', size: 13 } },
+            }]}
+            layout={{ margin: { t: 20, b: 10 } }}
+            style={{ width: '100%', height: 260 }}
+          />
+        </div>
+
+        <div className="card">
+          <div className="card-title">CO₂ Distribution by Batch</div>
+          <Plot
+            data={[{
+              type: 'histogram',
+              x: trend.map(b => b.Carbon_kg_CO2),
+              nbinsx: 20,
+              marker: { color: '#39ff14', opacity: 0.7 },
+            }, {
+              type: 'scatter', mode: 'lines', name: 'Golden Target',
+              x: [data.golden_carbon_kg, data.golden_carbon_kg],
+              y: [0, 12],
+              line: { color: '#00e5ff', dash: 'dash', width: 2 },
+            }]}
+            layout={{ xaxis: { title: 'Carbon (kg CO₂)' }, yaxis: { title: 'Batch Count' }, showlegend: false }}
+            style={{ width: '100%', height: 260 }}
+          />
+        </div>
+      </div>
+
+      {/* Trend */}
+      <div className="card">
+        <div className="card-title">Energy & Carbon Trend Across Batches</div>
+        <Plot
+          data={[
+            {
+              type: 'scatter', mode: 'lines+markers', name: 'Energy (kWh)',
+              x: trend.map(b => b.Batch_ID),
+              y: trend.map(b => b.Total_Energy_kWh),
+              line: { color: '#ffb300', width: 2 },
+              marker: { size: 4 },
+            },
+            {
+              type: 'scatter', mode: 'lines+markers', name: 'Carbon (kg CO₂)',
+              x: trend.map(b => b.Batch_ID),
+              y: trend.map(b => b.Carbon_kg_CO2),
+              line: { color: '#ff3d57', width: 2 },
+              marker: { size: 4 },
+            },
+            {
+              type: 'scatter', mode: 'lines', name: 'Golden Energy Target',
+              x: trend.map(b => b.Batch_ID),
+              y: trend.map(_ => data.golden_energy_kWh),
+              line: { color: '#00e5ff', dash: 'dash', width: 1.5 },
+            },
+          ]}
+          layout={{
+            xaxis: { tickangle: -45, tickfont: { size: 9 } },
+            yaxis: { title: 'Value' },
+            showlegend: true,
+            legend: { orientation: 'h', y: 1.1 }
+          }}
+          style={{ width: '100%', height: 340 }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB 5 — VALIDATION RESULTS
+// ══════════════════════════════════════════════════════════
+function ValidationResults() {
+  const { data: batches } = useApi('/batches', []);
+  const { data: rankings } = useApi('/rankings?mode=balanced', []);
+
+  if (!batches || !rankings) return <div className="page"><Loading /></div>;
+
+  const top5    = rankings.slice(0, 5);
+  const bottom5 = rankings.slice(-5);
+  const totalEnergy = batches.reduce((s, b) => s + b.Total_Energy_kWh, 0);
+  const totalCarbon = batches.reduce((s, b) => s + b.Carbon_kg_CO2, 0);
+  const avgQuality  = batches.reduce((s, b) => s + b.Quality_Score, 0) / batches.length;
+  const avgPerf     = batches.reduce((s, b) => s + b.Performance_Score, 0) / batches.length;
+
+  const topBatch    = batches.find(b => b.Batch_ID === top5[0]?.Batch_ID);
+  const bottomBatch = batches.find(b => b.Batch_ID === bottom5[0]?.Batch_ID);
+
+  return (
+    <div className="page">
+      <div className="page-title">📋 Validation Results</div>
+      <div className="page-sub">Dataset summary · Best vs. worst batch comparison · System performance</div>
+
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        {[
+          { label: 'Total Batches',   value: batches.length, color: '#00e5ff' },
+          { label: 'Avg Quality',     value: avgQuality.toFixed(1), color: '#39ff14' },
+          { label: 'Avg Performance', value: avgPerf.toFixed(1), color: '#ffb300' },
+          { label: 'Fleet Carbon',    value: `${(totalCarbon/1000).toFixed(2)} t`, color: '#ff3d57' },
+        ].map(k => (
+          <div className="kpi" key={k.label}>
+            <div className="kpi-label">{k.label}</div>
+            <div className="kpi-value" style={{ color: k.color }}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Scatter: Quality vs Energy */}
+      <div className="grid-2" style={{ marginBottom: 20 }}>
+        <div className="card">
+          <div className="card-title">Quality Score vs Energy — All Batches</div>
+          <Plot
+            data={[{
+              type: 'scatter', mode: 'markers',
+              x: batches.map(b => b.Total_Energy_kWh),
+              y: batches.map(b => b.Quality_Score),
+              text: batches.map(b => b.Batch_ID),
+              marker: {
+                color: batches.map(b => b.Performance_Score),
+                colorscale: [['0','#ff3d57'],['0.5','#ffb300'],['1','#39ff14']],
+                size: 8, showscale: true,
+                colorbar: { title: 'Perf', thickness: 12, tickfont: { size: 10 } }
+              },
+              hovertemplate: '<b>%{text}</b><br>Energy: %{x:.1f}<br>Quality: %{y:.1f}<extra></extra>'
+            }]}
+            layout={{ xaxis: { title: 'Energy (kWh)' }, yaxis: { title: 'Quality Score' } }}
+          />
+        </div>
+
+        <div className="card">
+          <div className="card-title">Performance Score Distribution</div>
+          <Plot
+            data={[{
+              type: 'histogram',
+              x: batches.map(b => b.Performance_Score),
+              nbinsx: 15,
+              marker: { color: '#00e5ff', opacity: 0.8 },
+            }]}
+            layout={{ xaxis: { title: 'Performance Score' }, yaxis: { title: 'Count' } }}
+          />
+        </div>
+      </div>
+
+      {/* Top vs Bottom Comparison */}
+      {topBatch && bottomBatch && (
+        <div className="card" style={{ marginBottom: 20 }}>
+          <div className="card-title">Best vs Worst Batch Comparison</div>
+          <div className="grid-2" style={{ marginTop: 8 }}>
+            {[
+              { batch: topBatch, label: '🏆 Best Batch', color: '#39ff14' },
+              { batch: bottomBatch, label: '⚠️ Worst Batch', color: '#ff3d57' },
+            ].map(({ batch, label, color }) => (
+              <div key={batch.Batch_ID} style={{ border: `1px solid ${color}22`, borderRadius: 8, padding: 16, background: `${color}06` }}>
+                <div style={{ fontFamily: 'Space Mono', fontSize: 13, color, marginBottom: 12 }}>{label}: {batch.Batch_ID}</div>
+                {[
+                  ['Quality Score', batch.Quality_Score?.toFixed(2)],
+                  ['Yield Score', batch.Yield_Score?.toFixed(2)],
+                  ['Energy (kWh)', batch.Total_Energy_kWh?.toFixed(2)],
+                  ['Carbon (kg)', batch.Carbon_kg_CO2?.toFixed(2)],
+                  ['Performance', batch.Performance_Score?.toFixed(2)],
+                  ['Machine Speed', batch.Machine_Speed],
+                  ['Compression Force', batch.Compression_Force],
+                ].map(([lbl, val]) => (
+                  <div key={lbl} className="sig-param">
+                    <span className="sig-param-name">{lbl}</span>
+                    <span style={{ fontFamily: 'Space Mono', fontSize: 12, color }}>{val}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Full Rankings Table */}
+      <div className="card">
+        <div className="card-title">All Batches — Ranked by Similarity to Golden Signature</div>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Batch ID</th><th>Similarity</th><th>Quality</th><th>Yield</th><th>Energy (kWh)</th><th>Carbon (kg)</th><th>Perf Score</th></tr>
+          </thead>
+          <tbody>
+            {rankings.map((r, i) => (
+              <tr key={r.Batch_ID} style={{ background: i < 3 ? 'rgba(57,255,20,0.04)' : i >= rankings.length - 3 ? 'rgba(255,61,87,0.04)' : '' }}>
+                <td style={{ fontFamily: 'Space Mono', fontSize: 11, color: '#6b7a8d' }}>{i+1}</td>
+                <td style={{ fontFamily: 'Space Mono', fontSize: 12 }}>{r.Batch_ID}</td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div className="progress-wrap" style={{ width: 60 }}>
+                      <div className="progress-bar" style={{
+                        width: `${r.similarity_pct}%`,
+                        background: r.similarity_pct > 80 ? '#39ff14' : r.similarity_pct > 50 ? '#ffb300' : '#ff3d57'
+                      }} />
+                    </div>
+                    <span style={{ fontFamily: 'Space Mono', fontSize: 11 }}>{r.similarity_pct}%</span>
+                  </div>
+                </td>
+                <td>{r.Quality_Score}</td>
+                <td>{r.Yield_Score}</td>
+                <td>{r.Energy_kWh}</td>
+                <td>{r.Carbon_kg}</td>
+                <td>{r.Perf_Score}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// FLEET HEALTH DONUT (inline in topbar)
+// ══════════════════════════════════════════════════════════
+function FleetHealthBanner() {
+  const { data } = useApi('/fleet-health', []);
+  if (!data) return null;
+
+  const total = data.total;
+  const r = 16, c = 2 * Math.PI * r;
+  const hPct = data.healthy / total;
+  const wPct = data.warning / total;
+  const cPct = data.critical / total;
+
+  return (
+    <div className="fleet-health">
+      <div className="fleet-donut">
+        <svg width="40" height="40" viewBox="0 0 40 40">
+          <circle cx="20" cy="20" r={r} fill="none" stroke="#1e2d3d" strokeWidth="5" />
+          <circle cx="20" cy="20" r={r} fill="none" stroke="#39ff14" strokeWidth="5"
+            strokeDasharray={`${hPct * c} ${c}`} strokeDashoffset="0" />
+          <circle cx="20" cy="20" r={r} fill="none" stroke="#ffb300" strokeWidth="5"
+            strokeDasharray={`${wPct * c} ${c}`} strokeDashoffset={`${-hPct * c}`} />
+          <circle cx="20" cy="20" r={r} fill="none" stroke="#ff3d57" strokeWidth="5"
+            strokeDasharray={`${cPct * c} ${c}`} strokeDashoffset={`${-(hPct + wPct) * c}`} />
+        </svg>
+        <div className="fleet-donut-label">{data.health_pct}%</div>
+      </div>
+      <div style={{ display: 'flex', gap: 12 }}>
+        <div className="fleet-stat">
+          <div className="fleet-dot" style={{ background: '#39ff14' }} />
+          <span className="fleet-count" style={{ color: '#39ff14' }}>{data.healthy}</span> OK
+        </div>
+        <div className="fleet-stat">
+          <div className="fleet-dot" style={{ background: '#ffb300' }} />
+          <span className="fleet-count" style={{ color: '#ffb300' }}>{data.warning}</span> Warn
+        </div>
+        <div className={`fleet-stat ${data.critical > 0 ? 'crit-pulse' : ''}`}>
+          <div className="fleet-dot" style={{ background: '#ff3d57' }} />
+          <span className="fleet-count" style={{ color: '#ff3d57' }}>{data.critical}</span> Crit
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB 6 — WHAT-IF SIMULATOR
+// ══════════════════════════════════════════════════════════
+function WhatIfSimulator({ activeMode }) {
+  const [params, setParams] = useState(null);
+  const [ranges, setRanges] = useState(null);
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState(activeMode);
+
+  useEffect(() => setMode(activeMode), [activeMode]);
+
+  // Initialize with golden params
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API}/simulate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ params: {}, mode })
+    }).then(r => r.json()).then(d => {
+      const golden = {};
+      Object.entries(d.param_ranges).forEach(([k, v]) => { golden[k] = v.golden; });
+      setParams(golden);
+      setRanges(d.param_ranges);
+      setResult(d);
+      setLoading(false);
+    });
+  }, [mode]);
+
+  const simulate = (newParams) => {
+    setParams(newParams);
+    fetch(`${API}/simulate`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ params: newParams, mode })
+    }).then(r => r.json()).then(setResult);
+  };
+
+  const resetToGolden = () => {
+    if (!ranges) return;
+    const golden = {};
+    Object.entries(ranges).forEach(([k, v]) => { golden[k] = v.golden; });
+    simulate(golden);
+  };
+
+  const handleSlider = (param, val) => {
+    const newParams = { ...params, [param]: parseFloat(val) };
+    simulate(newParams);
+  };
+
+  const paramLabels = {
+    Granulation_Time: 'Granulation Time (min)',
+    Binder_Amount: 'Binder Amount (g)',
+    Drying_Temp: 'Drying Temp (°C)',
+    Drying_Time: 'Drying Time (min)',
+    Compression_Force: 'Compression Force (kN)',
+    Machine_Speed: 'Machine Speed (RPM)',
+    Lubricant_Conc: 'Lubricant Conc (%)',
+  };
+
+  if (loading || !params || !ranges || !result) return <div className="page"><Loading text="Initializing simulator..." /></div>;
+
+  const comp = result.comparison;
+  const outcomes = ['Quality_Score', 'Yield_Score', 'Total_Energy_kWh', 'Carbon_kg_CO2', 'Performance_Score'];
+  const outcomeLabels = { Quality_Score: 'Quality', Yield_Score: 'Yield', Total_Energy_kWh: 'Energy (kWh)', Carbon_kg_CO2: 'Carbon (kg)', Performance_Score: 'Performance' };
+
+  return (
+    <div className="page">
+      <div className="page-title">🔮 What-If Simulator</div>
+      <div className="page-sub">Drag parameters to predict outcomes · Powered by ML regression on 60 batches</div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        <button className="btn btn-cyan" onClick={resetToGolden}>↺ Reset to Golden</button>
+        {[['energy','⚡ Energy'],['quality','🏆 Quality'],['balanced','⚖️ Balanced']].map(([m, label]) => (
+          <button key={m} className={`btn ${mode===m ? 'btn-cyan' : ''}`}
+            style={{ borderColor: mode===m ? 'var(--accent)' : 'var(--border)', color: mode===m ? 'var(--accent)' : 'var(--muted)' }}
+            onClick={() => setMode(m)}>{label}</button>
+        ))}
+      </div>
+
+      {/* Predicted KPIs */}
+      <div className="grid-4" style={{ marginBottom: 16 }}>
+        {[
+          { key: 'Quality_Score',     label: 'Predicted Quality',  color: '#00e5ff', icon: '🏆' },
+          { key: 'Total_Energy_kWh',  label: 'Predicted Energy',   color: '#ffb300', icon: '⚡' },
+          { key: 'Carbon_kg_CO2',     label: 'Predicted Carbon',   color: '#ff3d57', icon: '🌿' },
+          { key: 'Performance_Score', label: 'Predicted Perf',     color: '#39ff14', icon: '📊' },
+        ].map(k => (
+          <div className="kpi" key={k.key}>
+            <div className="kpi-label">{k.icon} {k.label}</div>
+            <div className="kpi-value" style={{ color: k.color, fontSize: 22 }}>
+              {comp[k.key]?.predicted?.toFixed(1)}
+            </div>
+            <div className={`kpi-delta ${comp[k.key]?.good ? 'pos' : 'neg'}`}>
+              {comp[k.key]?.diff > 0 ? '+' : ''}{comp[k.key]?.diff?.toFixed(1)} vs golden
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2">
+        {/* Sliders */}
+        <div>
+          <div className="card-title" style={{ marginBottom: 8 }}>PARAMETER CONTROLS</div>
+          {Object.entries(params).map(([param, val]) => (
+            <div key={param} className="sim-slider-row">
+              <div className="sim-slider-label">
+                {paramLabels[param] || param}
+                <span>{val.toFixed(1)}</span>
+              </div>
+              <input type="range" className="sim-slider"
+                min={ranges[param].min} max={ranges[param].max}
+                step={ranges[param].step}
+                value={val}
+                onChange={e => handleSlider(param, e.target.value)}
+              />
+              {Math.abs(val - ranges[param].golden) < 0.01 && <span className="sim-golden-tag">GOLDEN</span>}
+            </div>
+          ))}
+        </div>
+
+        {/* Radar Chart */}
+        <div className="card">
+          <div className="card-title">PREDICTED vs GOLDEN SIGNATURE</div>
+          <Plot
+            data={[
+              {
+                type: 'scatterpolar', fill: 'toself', name: 'Predicted',
+                r: outcomes.map(k => comp[k]?.predicted || 0),
+                theta: outcomes.map(k => outcomeLabels[k]),
+                fillcolor: 'rgba(0,229,255,0.15)',
+                line: { color: '#00e5ff', width: 2 },
+              },
+              {
+                type: 'scatterpolar', fill: 'toself', name: 'Golden',
+                r: outcomes.map(k => comp[k]?.golden || 0),
+                theta: outcomes.map(k => outcomeLabels[k]),
+                fillcolor: 'rgba(57,255,20,0.08)',
+                line: { color: '#39ff14', width: 2, dash: 'dash' },
+              },
+            ]}
+            layout={{
+              polar: {
+                bgcolor: 'transparent',
+                radialaxis: { visible: true, gridcolor: '#1e2d3d', color: '#6b7a8d', tickfont: { size: 9 } },
+                angularaxis: { gridcolor: '#1e2d3d', color: '#e8f0fe', tickfont: { size: 10 } },
+              },
+              showlegend: true,
+              legend: { orientation: 'h', y: -0.1, font: { color: '#e8f0fe' } },
+              margin: { t: 24, b: 40 },
+            }}
+            style={{ width: '100%', height: 380 }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB 7 — ROI CALCULATOR
+// ══════════════════════════════════════════════════════════
+function ROICalculator() {
+  const [costRate, setCostRate] = useState(8.0);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API}/roi?cost_per_kwh=${costRate}`)
+      .then(r => r.json()).then(d => { setData(d); setLoading(false); });
+  }, [costRate]);
+
+  if (loading || !data) return <div className="page"><Loading text="Calculating ROI..." /></div>;
+
+  const fmt = (n) => {
+    if (n >= 100000) return `₹${(n/100000).toFixed(2)} Lakhs`;
+    if (n >= 1000) return `₹${(n/1000).toFixed(1)}K`;
+    return `₹${n.toFixed(0)}`;
+  };
+
+  const savings = data.batch_savings || [];
+
+  return (
+    <div className="page">
+      <div className="page-title">💰 ROI Calculator</div>
+      <div className="page-sub">Projected cost savings from optimizing batches to golden signature</div>
+
+      {/* Cost Rate Input */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
+        <span style={{ fontSize: 13, color: 'var(--muted)' }}>Energy Cost Rate:</span>
+        <input type="number" value={costRate} onChange={e => setCostRate(parseFloat(e.target.value) || 8)}
+          style={{ width: 100 }} step="0.5" min="1" max="50" />
+        <span style={{ fontSize: 12, color: 'var(--muted)' }}>₹/kWh</span>
+      </div>
+
+      {/* Hero Card */}
+      <div className="roi-hero">
+        <div style={{ fontSize: 12, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 2, fontFamily: 'var(--font-mono)' }}>Annual Savings Potential</div>
+        <div className="roi-hero-amount">{fmt(data.annual_cost_saved)}</div>
+        <div className="roi-hero-sub">
+          By optimizing <strong style={{ color: 'var(--accent)' }}>{data.improvable_batches}</strong> of {data.total_batches} batches to match the golden signature
+        </div>
+      </div>
+
+      {/* KPI Grid */}
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        {[
+          { label: 'Improvable Batches', value: `${data.improvable_batches} / ${data.total_batches}`, color: '#00e5ff' },
+          { label: 'Energy Saved / Year', value: `${(data.annual_energy_saved_kwh/1000).toFixed(1)} MWh`, color: '#ffb300' },
+          { label: 'CO₂ Reduced / Year', value: `${data.annual_carbon_saved_tonnes.toFixed(2)} t`, color: '#39ff14' },
+          { label: 'Cost per Batch Save', value: `₹${data.improvable_batches > 0 ? (data.total_cost_saved / data.improvable_batches).toFixed(0) : 0}`, color: '#ff3d57' },
+        ].map(k => (
+          <div className="kpi" key={k.label}>
+            <div className="kpi-label">{k.label}</div>
+            <div className="kpi-value" style={{ color: k.color, fontSize: 20 }}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2">
+        {/* Top Savings Bar Chart */}
+        <div className="card">
+          <div className="card-title">Top Batches by Savings Potential</div>
+          <Plot
+            data={[{
+              type: 'bar',
+              x: savings.slice(0,10).map(s => s.batch_id),
+              y: savings.slice(0,10).map(s => s.cost_saved),
+              marker: {
+                color: savings.slice(0,10).map((s,i) => i < 3 ? '#39ff14' : i < 7 ? '#ffb300' : '#00e5ff'),
+                opacity: 0.85
+              },
+              text: savings.slice(0,10).map(s => `₹${s.cost_saved.toFixed(0)}`),
+              textposition: 'outside',
+              textfont: { color: '#e8f0fe', size: 10 },
+            }]}
+            layout={{
+              xaxis: { tickangle: -30, tickfont: { size: 10 } },
+              yaxis: { title: 'Savings (₹)', gridcolor: '#1e2d3d' },
+              margin: { t: 16, r: 16 },
+            }}
+            style={{ width: '100%', height: 300 }}
+          />
+        </div>
+
+        {/* Energy vs Savings Scatter */}
+        <div className="card">
+          <div className="card-title">Current Energy vs Savings Potential</div>
+          <Plot
+            data={[{
+              type: 'scatter', mode: 'markers',
+              x: savings.map(s => s.current_energy),
+              y: savings.map(s => s.energy_saved_kwh),
+              text: savings.map(s => s.batch_id),
+              marker: {
+                size: savings.map(s => Math.max(6, s.cost_saved / 20)),
+                color: savings.map(s => s.cost_saved),
+                colorscale: [['0','#ffb300'],['1','#39ff14']],
+                showscale: true,
+                colorbar: { title: '₹', thickness: 12, tickfont: { size: 10 } }
+              },
+              hovertemplate: '<b>%{text}</b><br>Current: %{x:.1f} kWh<br>Savings: %{y:.1f} kWh<br>₹%{marker.color:.0f}<extra></extra>'
+            }]}
+            layout={{
+              xaxis: { title: 'Current Energy (kWh)' },
+              yaxis: { title: 'Savings Potential (kWh)' },
+            }}
+            style={{ width: '100%', height: 300 }}
+          />
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div style={{ marginTop: 16, padding: '14px 20px', background: 'rgba(57,255,20,0.05)', border: '1px solid rgba(57,255,20,0.2)', borderRadius: 10, fontSize: 13, lineHeight: 1.7 }}>
+        <strong style={{ color: 'var(--accent2)' }}>💡 Business Impact Summary:</strong><br/>
+        Implementing golden signature optimization across <strong>{data.improvable_batches} batches</strong> would save
+        <strong style={{ color: 'var(--accent)' }}> {(data.annual_energy_saved_kwh/1000).toFixed(1)} MWh</strong> of energy and
+        <strong style={{ color: 'var(--accent2)' }}> {data.annual_carbon_saved_tonnes.toFixed(2)} tonnes CO₂</strong> annually,
+        translating to <strong style={{ color: 'var(--accent2)' }}>{fmt(data.annual_cost_saved)}</strong> in annual cost reduction
+        at current rate of <strong>₹{costRate}/kWh</strong>.
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// ROOT APP
+// ══════════════════════════════════════════════════════════
+function App() {
+  const [tab, setTab]         = useState('monitor');
+  const [activeMode, setMode] = useState('balanced');
+  const [chatOpen, setChatOpen] = useState(false);
+
+  const { data: sigs } = useApi('/golden-signatures', [tab]);
+  const { data: proposals } = useApi('/proposals', [tab]);
+  const pendingCount = proposals ? Object.keys(proposals).length : 0;
+
+  const navItems = [
+    { id: 'monitor',       icon: '📊', label: 'Batch Monitor' },
+    { id: 'simulator',     icon: '🔮', label: 'What-If Sim' },
+    { id: 'optimization',  icon: '🧬', label: 'Optimization' },
+    { id: 'hitl',          icon: '🧑‍🔬', label: 'HITL Manager' },
+    { id: 'sustainability',icon: '🌿', label: 'Sustainability' },
+    { id: 'roi',           icon: '💰', label: 'ROI Calculator' },
+    { id: 'validation',    icon: '📋', label: 'Validation' },
+  ];
+
+  const modeLabels = {
+    energy:   '⚡ Energy First',
+    quality:  '🏆 Quality First',
+    balanced: '⚖️ Balanced',
+  };
+
+  const tabComponents = {
+    monitor:       <BatchMonitor activeMode={activeMode} />,
+    simulator:     <WhatIfSimulator activeMode={activeMode} />,
+    optimization:  <OptimizationEngine activeMode={activeMode} />,
+    hitl:          <HITLManager />,
+    sustainability:<Sustainability />,
+    roi:           <ROICalculator />,
+    validation:    <ValidationResults />,
+  };
+
+  return (
+    <div className="shell">
+      {/* SIDEBAR */}
+      <div className="sidebar">
+        <div className="logo-block">
+          <div className="logo-icon">⚡</div>
+          <div className="logo-name">AURAOPTIMA</div>
+          <div className="logo-sub">Golden Signature Intelligence</div>
+        </div>
+
+        <nav className="nav">
+          {navItems.map(item => (
+            <div key={item.id} className={`nav-item ${tab === item.id ? 'active' : ''}`}
+              onClick={() => setTab(item.id)}>
+              <span className="nav-icon">{item.icon}</span>
+              <span>{item.label}</span>
+              {item.id === 'hitl' && pendingCount > 0 &&
+                <span style={{ marginLeft: 'auto', background: '#ffb300', color: '#080c10', fontSize: 10, borderRadius: 10, padding: '1px 6px', fontWeight: 700 }}>{pendingCount}</span>
+              }
+            </div>
+          ))}
+        </nav>
+
+        <div className="mode-block">
+          <div className="mode-label">Active Mode</div>
+          {Object.entries(modeLabels).map(([m, label]) => (
+            <button key={m} className={`mode-btn ${activeMode === m ? 'active' : ''}`}
+              onClick={() => setMode(m)}>{label}</button>
+          ))}
+          {sigs && sigs[activeMode] && (
+            <div style={{ marginTop: 10, fontSize: 11, color: '#6b7a8d' }}>
+              Signature: <span style={{ color: '#00e5ff', fontFamily: 'Space Mono' }}>{sigs[activeMode].source_batch}</span> v{sigs[activeMode].version || 1}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* MAIN */}
+      <div className="main">
+        <div className="topbar">
+          <span className="topbar-title">
+            {navItems.find(n => n.id === tab)?.icon} {navItems.find(n => n.id === tab)?.label}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <FleetHealthBanner />
+            <div className="topbar-badges">
+              <span className="badge badge-cyan">60 Batches</span>
+              <span className="badge badge-green">3 Signatures</span>
+              {pendingCount > 0 && <span className="badge badge-warn">{pendingCount} Pending</span>}
+              <span className="badge badge-cyan">{modeLabels[activeMode]}</span>
+            </div>
+          </div>
+        </div>
+
+        {tabComponents[tab]}
+      </div>
+
+      {/* Chat FAB + Panel */}
+      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
+      <button className={`chat-fab ${chatOpen ? 'open' : ''}`} onClick={() => setChatOpen(!chatOpen)}>
+        {!chatOpen && <div className="chat-fab-pulse" />}
+        {chatOpen ? '✕' : '🤖'}
+      </button>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
