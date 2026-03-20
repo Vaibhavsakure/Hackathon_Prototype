@@ -2,3 +2,9 @@ venv/
 __pycache__/
 .env
 output/
+.vscode/
+pyright_output.json
+out.txt
+test_results.txt
+test_results_new.txt
+frontend/

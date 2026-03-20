@@ -26,7 +26,7 @@ def load_process_data():
         ws = wb[sheet_name]
         rows = list(ws.iter_rows(values_only=True))
         headers = rows[0]
-        data = pd.DataFrame(rows[1:], columns=headers)
+        data = pd.DataFrame(rows[1:], columns=list(headers))
         data = data.dropna(subset=["Batch_ID"])
         
         batch_id = data["Batch_ID"].iloc[0]
@@ -74,27 +74,31 @@ def build_master_df(production_df, process_df):
         (master["Dissolution_Rate"] / 100 * 30) +
         ((1 - master["Friability"] / master["Friability"].max()) * 20) +
         ((1 - abs(master["Content_Uniformity"] - 100) / 10) * 20)
-    ).round(3)
+    )
+    master["Quality_Score"] = master["Quality_Score"].round(3)
     
     # ── Yield Score (0–100) ──
     # Lower Moisture = better, lower Friability = better
     master["Yield_Score"] = (
         ((1 - master["Moisture_Content"] / master["Moisture_Content"].max()) * 50) +
         ((1 - master["Friability"] / master["Friability"].max()) * 50)
-    ).round(3)
+    )
+    master["Yield_Score"] = master["Yield_Score"].round(3)
     
     # ── Energy Efficiency Score ──
     # Higher quality per kWh = better
     master["Energy_Efficiency"] = (
         master["Quality_Score"] / master["Total_Energy_kWh"]
-    ).round(4)
+    )
+    master["Energy_Efficiency"] = master["Energy_Efficiency"].round(4)
     
     # ── Performance Score (composite) ──
     master["Performance_Score"] = (
         master["Quality_Score"] * 0.4 +
         master["Yield_Score"] * 0.4 +
         master["Energy_Efficiency"] * 20
-    ).round(3)
+    )
+    master["Performance_Score"] = master["Performance_Score"].round(3)
     
     print(f"✅ Master DataFrame built: {master.shape[0]} rows × {master.shape[1]} columns")
     print(f"\n📊 Key Stats:")

@@ -1,7 +1,8 @@
 """
 AuraOptima — LLM Assistant Module
-Uses local Ollama (Llama 3.2) to provide natural language insights
-and conversational Q&A about batch manufacturing data.
+Uses Google Gemini API (primary) with local Ollama fallback
+for natural language insights and conversational Q&A about
+batch manufacturing data.
 """
 
 import os
@@ -16,8 +17,39 @@ load_dotenv()  # reads .env file automatically
 MASTER_CSV      = "data/master_df.csv"
 SIGNATURES_FILE = "data/golden_signatures.json"
 
+# Gemini config
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL   = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+
+# Groq config (primary fallback — fast & free)
+GROQ_API_KEY   = os.environ.get("GROQ_API_KEY", "")
+GROQ_MODEL     = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+GROQ_API_URL   = "https://api.groq.com/openai/v1/chat/completions"
+
+# Ollama fallback config
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL    = os.environ.get("OLLAMA_MODEL", "llama3.2")
+OLLAMA_MODEL    = os.environ.get("OLLAMA_MODEL", "gemma3:12b")
+
+# Try to configure Gemini
+_gemini_available = False
+try:
+    if GEMINI_API_KEY:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)  # type: ignore
+        _gemini_available = True
+        print(f"✅ Gemini API configured (model: {GEMINI_MODEL})")
+    else:
+        print("⚠️  GEMINI_API_KEY not set")
+except ImportError:
+    print("⚠️  google-generativeai not installed")
+
+# Check Groq availability
+_groq_available = bool(GROQ_API_KEY)
+if _groq_available:
+    print(f"✅ Groq API configured (model: {GROQ_MODEL})")
+else:
+    print("⚠️  GROQ_API_KEY not set")
+
 
 # ─── LOAD HELPERS ─────────────────────────────────────────
 def _load_signatures():
@@ -27,9 +59,85 @@ def _load_signatures():
 def _load_df():
     return pd.read_csv(MASTER_CSV)
 
-# ─── OLLAMA API HELPER ────────────────────────────────────
+
+# ─── GEMINI API HELPER ───────────────────────────────────
+def _gemini_generate(prompt, system=None, max_tokens=1024):
+    """Call Google Gemini API for text generation."""
+    import google.generativeai as genai
+
+    model = genai.GenerativeModel(  # type: ignore
+        model_name=GEMINI_MODEL,
+        system_instruction=system,
+        generation_config=genai.types.GenerationConfig(  # type: ignore
+            max_output_tokens=max_tokens,
+            temperature=0.7,
+        ),
+    )
+
+    # Build conversation from messages list or plain string
+    if isinstance(prompt, list):
+        # Convert chat history format to Gemini format
+        history = []
+        last_user_msg = ""
+        for msg in prompt:
+            role = "user" if msg["role"] == "user" else "model"
+            if msg == prompt[-1] and role == "user":
+                last_user_msg = msg["content"]
+            else:
+                history.append({"role": role, "parts": [msg["content"]]})
+
+        chat = model.start_chat(history=history)
+        response = chat.send_message(last_user_msg)
+    else:
+        response = model.generate_content(prompt)
+
+    return response.text
+
+
+# ─── GROQ API HELPER (PRIMARY FALLBACK) ──────────────────
+def _groq_generate(prompt, system=None, max_tokens=1024):
+    """Call Groq API via REST (OpenAI-compatible endpoint)."""
+    messages = []
+    if system:
+        messages.append({"role": "system", "content": system})
+    if isinstance(prompt, list):
+        for msg in prompt:
+            role = msg["role"]
+            if role == "model":
+                role = "assistant"
+            messages.append({"role": role, "content": msg["content"]})
+    else:
+        messages.append({"role": "user", "content": prompt})
+
+    payload = {
+        "model": GROQ_MODEL,
+        "messages": messages,
+        "max_tokens": max_tokens,
+        "temperature": 0.7,
+    }
+
+    try:
+        resp = requests.post(
+            GROQ_API_URL,
+            json=payload,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            timeout=60,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"]
+    except requests.HTTPError as e:
+        raise RuntimeError(f"Groq API error: {e.response.status_code} — {e.response.text[:200]}")
+    except Exception as e:
+        raise RuntimeError(f"Groq error: {str(e)}")
+
+
+# ─── OLLAMA API HELPER (LAST FALLBACK) ───────────────────
 def _ollama_generate(prompt, system=None, max_tokens=1024):
-    """Call Ollama's local chat API."""
+    """Call Ollama's local chat API as last-resort fallback."""
     messages = []
     if system:
         messages.append({"role": "system", "content": system})
@@ -63,6 +171,44 @@ def _ollama_generate(prompt, system=None, max_tokens=1024):
         )
     except Exception as e:
         raise RuntimeError(f"Ollama error: {str(e)}")
+
+
+# ─── SMART GENERATE (Gemini → Groq → Ollama) ────────────
+def _generate(prompt, system=None, max_tokens=1024):
+    """
+    Try Gemini API first. If it fails, try Groq.
+    If Groq fails, fall back to local Ollama.
+    """
+    errors = []
+
+    # 1. Try Gemini first
+    if _gemini_available:
+        try:
+            return _gemini_generate(prompt, system=system, max_tokens=max_tokens)
+        except Exception as e:
+            errors.append(f"Gemini: {str(e)[:100]}")
+            print(f"⚠️  Gemini API failed: {str(e)[:100]}")
+            print(f"   Falling back to Groq...")
+
+    # 2. Try Groq
+    if _groq_available:
+        try:
+            return _groq_generate(prompt, system=system, max_tokens=max_tokens)
+        except Exception as e:
+            errors.append(f"Groq: {str(e)[:100]}")
+            print(f"⚠️  Groq API failed: {str(e)[:100]}")
+            print(f"   Falling back to Ollama ({OLLAMA_MODEL})...")
+
+    # 3. Last resort: Ollama
+    try:
+        return _ollama_generate(prompt, system=system, max_tokens=max_tokens)
+    except Exception as e:
+        errors.append(f"Ollama: {str(e)[:100]}")
+        raise RuntimeError(
+            f"All LLM backends failed.\n"
+            + "\n".join(errors) + "\n"
+            f"Set GROQ_API_KEY in .env (free at https://console.groq.com)"
+        )
 
 
 # ─── SYSTEM PROMPT ────────────────────────────────────────
@@ -211,12 +357,13 @@ def build_context_for_query(user_message):
 # ─── CHAT ─────────────────────────────────────────────────
 def chat(user_message, conversation_history=None):
     """
-    Send a message to Ollama (Llama 3.2) with full context.
+    Send a message with full context.
+    Tries Gemini API first, falls back to local Ollama if needed.
     conversation_history: list of {"role": "user"/"assistant", "content": "..."}
     """
     system_prompt = build_system_prompt()
 
-    # Build messages list for Ollama
+    # Build messages list
     messages = []
     if conversation_history:
         for msg in conversation_history:
@@ -230,7 +377,7 @@ def chat(user_message, conversation_history=None):
 
     messages.append({"role": "user", "content": enriched_message})
 
-    return _ollama_generate(messages, system=system_prompt, max_tokens=1024)
+    return _generate(messages, system=system_prompt, max_tokens=1024)
 
 
 # ─── BATCH INSIGHT GENERATOR ─────────────────────────────
@@ -244,16 +391,17 @@ def generate_batch_insight(batch_id, mode="balanced"):
 
     report = analyze_deviation(batch_id, mode=mode)
     if "error" in report:
-        return {"error": report["error"]}
+        return report
+    summary = report["summary"] if isinstance(report.get("summary"), dict) else {}
 
     prompt = f"""Analyze this batch deviation report and provide a concise, actionable summary in 3-5 sentences.
 
 ## Deviation Report for Batch {batch_id} (Mode: {mode})
 
-- Overall Status: {report['overall_status']}
-- Critical Parameters: {report['summary']['critical_params']}
-- Warning Parameters: {report['summary']['warning_params']}
-- OK Parameters: {report['summary']['ok_params']}
+- Overall Status: {report.get('overall_status')}
+- Critical Parameters: {summary.get('critical_params')}
+- Warning Parameters: {summary.get('warning_params')}
+- OK Parameters: {summary.get('ok_params')}
 
 ### Parameter Deviations:
 {json.dumps(report['param_analysis'], indent=2)}
@@ -277,7 +425,7 @@ Provide your analysis with:
         "Be specific with numbers and batch IDs."
     )
 
-    response_text = _ollama_generate(prompt, system=system, max_tokens=512)
+    response_text = _generate(prompt, system=system, max_tokens=512)
 
     return {
         "batch_id": batch_id,
@@ -292,7 +440,8 @@ Provide your analysis with:
 # ─── MAIN (test) ─────────────────────────────────────────
 if __name__ == "__main__":
     print("=" * 55)
-    print("   AuraOptima — LLM Assistant Test (Ollama)")
+    print("   AuraOptima — LLM Assistant Test")
+    print("   Gemini API → Ollama Fallback")
     print("=" * 55)
 
     # Test chat

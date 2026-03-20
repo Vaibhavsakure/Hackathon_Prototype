@@ -5,6 +5,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List
 import json, os, sys
+import numpy as np
+from sklearn.linear_model import LinearRegression  # type: ignore
 
 sys.path.insert(0, os.path.dirname(__file__))
 from deviation_engine import analyze_deviation, rank_all_batches
@@ -15,6 +17,11 @@ from hitl_manager import (
 )
 from llm_assistant import chat as llm_chat, generate_batch_insight
 from report_generator import generate_batch_report
+from database import (
+    init_db, get_batches_dataframe, get_all_batches,
+    get_pending_proposals_db, get_decisions_summary_db,
+    get_db_stats
+)
 import pandas as pd
 
 app = FastAPI(title="AuraOptima API", version="1.0.0")
@@ -29,14 +36,17 @@ app.add_middleware(
 MASTER_CSV      = "data/master_df.csv"
 SIGNATURES_FILE = "data/golden_signatures.json"
 
+# ── Initialize SQLite database on startup ─────────────────
+init_db()
+
 def load_df():
-    return pd.read_csv(MASTER_CSV)
+    """Load batch data from SQLite database."""
+    return get_batches_dataframe()
 
 # ── GET /batches ──────────────────────────────────────────
 @app.get("/batches")
 def get_batches():
-    df = load_df()
-    return df.to_dict(orient="records")
+    return get_all_batches()
 
 # ── GET /golden-signatures ────────────────────────────────
 @app.get("/golden-signatures")
@@ -80,7 +90,7 @@ def optimize(req: OptimizeRequest):
 # ── GET /proposals ────────────────────────────────────────
 @app.get("/proposals")
 def get_proposals():
-    return get_pending_proposals()
+    return get_pending_proposals_db()
 
 # ── POST /approve-update ──────────────────────────────────
 class ApproveRequest(BaseModel):
@@ -103,7 +113,7 @@ def approve_update(req: ApproveRequest):
 # ── GET /decisions ────────────────────────────────────────
 @app.get("/decisions")
 def get_decisions():
-    return get_decisions_summary()
+    return get_decisions_summary_db()
 
 # ── GET /sustainability ───────────────────────────────────
 @app.get("/sustainability")
@@ -121,7 +131,7 @@ def get_sustainability():
     potential_energy_savings = max(0, (avg_energy - golden_energy) * len(df))
     potential_carbon_savings = max(0, (avg_carbon - golden_carbon) * len(df))
 
-    trend = df[["Batch_ID","Total_Energy_kWh","Carbon_kg_CO2","Quality_Score","Performance_Score"]].to_dict(orient="records")
+    trend = df[["Batch_ID","Total_Energy_kWh","Carbon_kg_CO2","Quality_Score","Performance_Score"]].to_dict("records")
 
     return {
         "total_energy_kWh":        round(total_energy, 2),
@@ -185,7 +195,7 @@ def download_report(batch_id: str, mode: str = "balanced"):
 
         filename = f"AuraOptima_Report_{batch_id}_{mode}.pdf"
         return Response(
-            content=bytes(pdf_bytes),
+            content=bytes(pdf_bytes) if pdf_bytes is not None else b"",
             media_type="application/pdf",
             headers={"Content-Disposition": f'attachment; filename="{filename}"'}
         )
@@ -273,8 +283,6 @@ def simulate(req: SimulateRequest):
     Predict outcomes for hypothetical parameter values using
     linear interpolation from the dataset.
     """
-    import numpy as np
-    from sklearn.linear_model import LinearRegression
 
     df = load_df()
     sigs = load_json(SIGNATURES_FILE, {})
@@ -290,12 +298,30 @@ def simulate(req: SimulateRequest):
 
     X = df[decision_vars].values
     predictions = {}
-    input_vals = np.array([[float(req.params.get(v, golden[v])) for v in decision_vars]])
+
+    # Clamp input parameters to dataset min/max to prevent wild extrapolation
+    clamped_inputs = []
+    for v in decision_vars:
+        val = float(req.params.get(v, golden[v]))
+        val = max(float(df[v].min()), min(float(df[v].max()), val))
+        clamped_inputs.append(val)
+    input_vals = np.array([clamped_inputs])
+
+    # Realistic bounds for outcome clamping
+    outcome_bounds = {
+        "Quality_Score":     (0, 100),
+        "Yield_Score":       (0, 100),
+        "Total_Energy_kWh":  (0, float(df["Total_Energy_kWh"].max()) * 1.5),
+        "Carbon_kg_CO2":     (0, float(df["Carbon_kg_CO2"].max()) * 1.5),
+        "Performance_Score": (0, 100),
+    }
 
     for outcome in outcomes:
         y = df[outcome].values
         model = LinearRegression().fit(X, y)
         pred = float(model.predict(input_vals)[0])
+        lo, hi = outcome_bounds.get(outcome, (0, 9999))
+        pred = max(lo, min(hi, pred))  # clamp to realistic range
         predictions[outcome] = round(pred, 2)
 
     # Param ranges for slider bounds
@@ -388,11 +414,16 @@ def get_roi(cost_per_kwh: float = 8.0):
     }
 
 
+# ── GET /db-stats ─────────────────────────────────────────
+@app.get("/db-stats")
+def db_stats():
+    """Database statistics for demo/judges."""
+    return get_db_stats()
+
 # ── GET / (serve frontend) ────────────────────────────────
 @app.get("/")
 def serve_frontend():
     return FileResponse("index.html")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+# Entry point moved to app.py
+# Run: python app.py

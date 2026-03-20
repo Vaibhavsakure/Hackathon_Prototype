@@ -192,11 +192,11 @@ def rank_all_batches(mode="balanced"):
         ranks.append({
             "Batch_ID":       row["Batch_ID"],
             "avg_deviation":  round(avg_dev, 2),
-            "Quality_Score":  round(row["Quality_Score"], 2),
-            "Yield_Score":    round(row["Yield_Score"], 2),
-            "Energy_kWh":     round(row["Total_Energy_kWh"], 2),
-            "Carbon_kg":      round(row["Carbon_kg_CO2"], 2),
-            "Perf_Score":     round(row["Performance_Score"], 2),
+            "Quality_Score":  round(float(row["Quality_Score"]), 2),
+            "Yield_Score":    round(float(row["Yield_Score"]), 2),
+            "Energy_kWh":     round(float(row["Total_Energy_kWh"]), 2),
+            "Carbon_kg":      round(float(row["Carbon_kg_CO2"]), 2),
+            "Perf_Score":     round(float(row["Performance_Score"]), 2),
             "similarity_pct": round(max(0, 100 - avg_dev), 2)
         })
 
@@ -227,6 +227,8 @@ if __name__ == "__main__":
     sample_batches = ["T001", "T038", "T046"]
     for bid in sample_batches:
         report = analyze_deviation(bid, mode="balanced")
+        if "error" in report:
+            continue
         print(f"\n📋 Batch {bid} vs Golden Signature ({report['mode_label']})")
         print(f"   Overall Status  : {report['overall_status']}")
         print(f"   Critical Params : {report['summary']['critical_params']}")

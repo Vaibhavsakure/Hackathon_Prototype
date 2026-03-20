@@ -1,6 +1,9 @@
 import json
 import os
 from datetime import datetime
+from database import (
+    create_proposal, update_proposal_status, add_decision
+)
 
 # ─── CONFIG ───────────────────────────────────────────────
 SIGNATURES_FILE  = "data/golden_signatures.json"
@@ -39,6 +42,13 @@ def propose_update(mode, batch_id, new_params, new_scores, improvement_pct):
     }
 
     save_json(PROPOSALS_FILE, proposals)
+
+    # Also write to SQLite database
+    try:
+        create_proposal(proposal_id, mode, batch_id, new_params, new_scores, improvement_pct)
+    except Exception as e:
+        print(f"⚠️  DB write warning: {e}")
+
     print(f"📋 Proposal created: {proposal_id}")
     return proposal_id
 
@@ -88,6 +98,17 @@ def accept_proposal(proposal_id, reviewer_note=""):
     save_json(PROPOSALS_FILE,  proposals)
     save_json(DECISIONS_FILE,  decisions)
 
+    # Also write to SQLite database
+    try:
+        update_proposal_status(proposal_id, "ACCEPTED", reviewer_note)
+        add_decision(
+            proposal_id=proposal_id, action="ACCEPTED", mode=mode,
+            batch_id=prop["batch_id"], improvement=prop["improvement_pct"],
+            reviewer_note=reviewer_note
+        )
+    except Exception as e:
+        print(f"⚠️  DB write warning: {e}")
+
     print(f"✅ Proposal {proposal_id} ACCEPTED → '{mode}' signature updated to v{old_version + 1}")
     return True
 
@@ -119,6 +140,17 @@ def reject_proposal(proposal_id, reviewer_note=""):
     save_json(PROPOSALS_FILE, proposals)
     save_json(DECISIONS_FILE, decisions)
 
+    # Also write to SQLite database
+    try:
+        update_proposal_status(proposal_id, "REJECTED", reviewer_note)
+        add_decision(
+            proposal_id=proposal_id, action="REJECTED", mode=prop["mode"],
+            batch_id=prop["batch_id"], improvement=prop["improvement_pct"],
+            reviewer_note=reviewer_note
+        )
+    except Exception as e:
+        print(f"⚠️  DB write warning: {e}")
+
     print(f"❌ Proposal {proposal_id} REJECTED — signature unchanged")
     return True
 
@@ -147,6 +179,15 @@ def reprioritize_mode(mode, new_weights, reason=""):
 
     save_json(SIGNATURES_FILE, signatures)
     save_json(DECISIONS_FILE,  decisions)
+
+    # Also write to SQLite database
+    try:
+        add_decision(
+            action="REPRIORITIZED", mode=mode,
+            old_weights=old_weights, new_weights=new_weights, reason=reason
+        )
+    except Exception as e:
+        print(f"⚠️  DB write warning: {e}")
 
     print(f"🔄 Mode '{mode}' reprioritized")
     print(f"   Old: {old_weights}")
