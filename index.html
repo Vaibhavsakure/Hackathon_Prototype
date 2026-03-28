@@ -678,6 +678,231 @@
   }
   .quick-action:hover { border-color: var(--accent); background: rgba(0,229,255,0.06); transform: translateY(-1px); }
   .quick-action-icon { font-size: 20px; }
+
+  /* ── HAMBURGER BUTTON ── */
+  .hamburger {
+    display: none; background: none; border: 1px solid var(--border);
+    color: var(--text); width: 40px; height: 40px; border-radius: 8px;
+    font-size: 20px; cursor: pointer; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0;
+  }
+  .hamburger:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,229,255,0.06); }
+  .hamburger:active { transform: scale(0.95); }
+
+  /* ── SIDEBAR OVERLAY ── */
+  .sidebar-overlay {
+    display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6); z-index: 998;
+    animation: overlayFadeIn 0.25s ease;
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  }
+  @keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ── BOTTOM TAB BAR ── */
+  .bottom-tab-bar {
+    display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 4px 0 calc(4px + env(safe-area-inset-bottom, 0px));
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .bottom-tab-bar::-webkit-scrollbar { display: none; }
+  .bottom-tab-bar-inner {
+    display: flex; min-width: max-content; padding: 0 8px;
+  }
+  .bottom-tab-item {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 6px 12px; cursor: pointer; min-width: 64px;
+    font-size: 9px; color: var(--muted); transition: all 0.15s;
+    border-radius: 8px; user-select: none; -webkit-tap-highlight-color: transparent;
+    gap: 2px; position: relative; overflow: hidden;
+  }
+  .bottom-tab-item:active { transform: scale(0.92); }
+  .bottom-tab-item.active { color: var(--accent); }
+  .bottom-tab-item.active::after {
+    content: ''; position: absolute; top: 0; left: 25%; right: 25%; height: 2px;
+    background: var(--accent); border-radius: 0 0 2px 2px;
+  }
+  .bottom-tab-icon { font-size: 18px; line-height: 1; }
+  .bottom-tab-label { font-size: 9px; white-space: nowrap; }
+
+  /* ── TABLE SCROLL WRAPPER ── */
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .table-scroll::-webkit-scrollbar { height: 3px; }
+  .table-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── RIPPLE EFFECT ── */
+  .ripple {
+    position: relative; overflow: hidden;
+  }
+  .ripple::after {
+    content: ''; position: absolute; width: 100%; height: 100%;
+    top: 0; left: 0; pointer-events: none;
+    background-image: radial-gradient(circle, rgba(0,229,255,0.2) 10%, transparent 10%);
+    background-repeat: no-repeat; background-position: 50%;
+    transform: scale(10,10); opacity: 0; transition: transform 0.5s, opacity 0.8s;
+  }
+  .ripple:active::after {
+    transform: scale(0,0); opacity: 0.3; transition: 0s;
+  }
+
+  /* ── SWIPE HINT ── */
+  .swipe-hint {
+    display: none; text-align: center; padding: 8px;
+    font-size: 11px; color: var(--muted);
+    animation: swipeHintFade 3s ease forwards;
+  }
+  @keyframes swipeHintFade { 0% { opacity: 1; } 70% { opacity: 1; } 100% { opacity: 0; display: none; } }
+
+  /* ════════════════════════════════════════════════════════════ */
+  /* TABLET BREAKPOINT — max 1024px                              */
+  /* ════════════════════════════════════════════════════════════ */
+  @media (max-width: 1024px) {
+    .sidebar { width: 200px; min-width: 200px; }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .topbar-badges { display: none; }
+    .fleet-health { display: none; }
+    .page { padding: 20px 24px; }
+    .topbar { padding: 12px 24px; }
+  }
+
+  /* ════════════════════════════════════════════════════════════ */
+  /* MOBILE BREAKPOINT — max 768px                               */
+  /* ════════════════════════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    .hamburger { display: flex; }
+    .sidebar-overlay.show { display: block; }
+    .bottom-tab-bar { display: block; }
+    .swipe-hint { display: block; }
+
+    .sidebar {
+      position: fixed; left: -280px; top: 0; bottom: 0; z-index: 999;
+      width: 260px; min-width: 260px;
+      transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: none;
+    }
+    .sidebar.open {
+      left: 0;
+      box-shadow: 8px 0 32px rgba(0,0,0,0.5);
+    }
+
+    .shell { flex-direction: column; }
+    .main { padding-bottom: 60px; }
+
+    .topbar {
+      padding: 10px 16px;
+      gap: 8px;
+    }
+    .topbar-title { font-size: 13px; }
+    .topbar-badges { display: none; }
+    .fleet-health { display: none; }
+
+    .page { padding: 16px; }
+    .page-title { font-size: 16px; }
+    .page-sub { font-size: 12px; margin-bottom: 16px; }
+
+    .grid-4 { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .grid-3 { grid-template-columns: 1fr; gap: 10px; }
+    .grid-2 { grid-template-columns: 1fr; gap: 10px; }
+
+    .kpi { padding: 14px 16px; }
+    .kpi-value { font-size: 20px !important; }
+    .kpi-label { font-size: 10px; }
+
+    .card { padding: 14px; border-radius: 8px; }
+    .card-title { font-size: 11px; margin-bottom: 12px; }
+
+    table { font-size: 12px; min-width: 600px; }
+    th, td { padding: 8px 10px; }
+
+    .btn { padding: 10px 16px; min-height: 44px; font-size: 13px; }
+    .nav-item { padding: 12px 20px; min-height: 44px; }
+    select, input { min-height: 44px; font-size: 14px; }
+
+    .before-after { grid-template-columns: 1fr; gap: 10px; }
+    .ba-arrow { transform: rotate(90deg); justify-self: center; }
+
+    .dash-hero { padding: 20px; border-radius: 10px; }
+    .dash-hero-title { font-size: 18px; }
+    .dash-hero-sub { font-size: 12px; }
+    .dash-ai-badge { font-size: 10px; padding: 4px 10px; }
+
+    .roi-hero { padding: 20px; }
+    .roi-hero-amount { font-size: 32px; }
+
+    .sim-slider-row { flex-wrap: wrap; padding: 10px 12px; }
+    .sim-slider-label { width: 100%; margin-bottom: 4px; }
+    .sim-slider { width: calc(100% - 60px); }
+
+    .dev-row { flex-wrap: wrap; }
+    .dev-label { width: 100%; margin-bottom: 4px; }
+    .dev-rec { margin-left: 0; }
+
+    .proposal-card { padding: 14px; }
+
+    .action-item { padding: 10px 12px; }
+
+    .ai-insight { padding: 14px 16px; border-radius: 10px; }
+
+    .quick-action { padding: 14px 16px; min-height: 56px; }
+
+    .sdg-grid { gap: 8px; }
+    .sdg-badge { padding: 6px 10px; font-size: 11px; }
+
+    .alert-dropdown { width: calc(100vw - 32px); right: -8px; }
+
+    /* Chat panel mobile */
+    .chat-panel {
+      width: calc(100vw - 16px); left: 8px; right: 8px;
+      bottom: 68px; height: calc(100vh - 140px);
+      max-height: calc(100vh - 140px);
+      border-radius: 14px;
+    }
+    .chat-fab { bottom: 68px; right: 16px; }
+    .chat-input { font-size: 16px; }
+
+    /* Plotly charts on mobile */
+    .js-plotly-plot { max-width: 100%; overflow: hidden; }
+  }
+
+  /* ════════════════════════════════════════════════════════════ */
+  /* SMALL PHONE BREAKPOINT — max 480px                          */
+  /* ════════════════════════════════════════════════════════════ */
+  @media (max-width: 480px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .kpi { padding: 12px; }
+    .kpi-value { font-size: 18px !important; }
+    .page { padding: 12px; }
+    .page-title { font-size: 15px; }
+    .card { padding: 12px; }
+    .topbar { padding: 8px 12px; }
+    .dash-hero { padding: 16px; }
+    .dash-hero-title { font-size: 16px; }
+    .roi-hero-amount { font-size: 26px; }
+    .chat-panel { bottom: 64px; height: calc(100vh - 100px); }
+
+    .sig-param { flex-direction: column; gap: 2px; }
+    .sig-param-name { font-size: 10px; }
+    .sig-param-val { font-size: 11px; }
+  }
+
+  /* ── SAFE AREA (iPhone notch) ── */
+  @supports(padding: max(0px)) {
+    .bottom-tab-bar { padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+    .chat-fab { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+  }
+
+  /* ── TOUCH DEVICE ENHANCEMENTS ── */
+  @media (hover: none) and (pointer: coarse) {
+    .nav-item:hover { background: transparent; color: var(--muted); }
+    .nav-item:active { background: rgba(0,229,255,0.08); color: var(--text); }
+    .btn:hover { transform: none; }
+    .btn:active { transform: scale(0.97); }
+    .quick-action:hover { transform: none; border-color: var(--border); background: var(--card); }
+    .quick-action:active { border-color: var(--accent); background: rgba(0,229,255,0.06); }
+    .chat-fab:hover { transform: none; }
+    .chat-fab:active { transform: scale(0.95); }
+  }
 </style>
 </head>
 <body>
@@ -941,7 +1166,7 @@ function BatchMonitor({ activeMode }) {
       <div className="page-title">📊 Batch Monitor</div>
       <div className="page-sub">Real-time parameter deviation vs. active golden signature</div>
 
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
         <select value={batchId} onChange={e => setBatchId(e.target.value)} style={{ width: 140 }}>
           {batchIds.map(id => <option key={id}>{id}</option>)}
         </select>
@@ -1089,7 +1314,7 @@ function OptimizationEngine({ activeMode }) {
       <div className="page-title">🧬 Optimization Engine</div>
       <div className="page-sub">Multi-objective Pareto analysis on 60 real batches</div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
         {[['energy','⚡ Energy First'],['quality','🏆 Quality First'],['balanced','⚖️ Balanced']].map(([m, label]) => (
           <button key={m} className={`btn ${mode===m ? 'btn-cyan' : ''}`}
             style={{ borderColor: mode===m ? 'var(--accent)' : 'var(--border)', color: mode===m ? 'var(--accent)' : 'var(--muted)' }}
@@ -1180,7 +1405,7 @@ function OptimizationEngine({ activeMode }) {
         {rankings && (
           <div className="card">
             <div className="card-title">Batch Similarity Rankings</div>
-            <table>
+            <div className="table-scroll"><table>
               <thead>
                 <tr><th>Batch</th><th>Similarity</th><th>Quality</th><th>Yield</th><th>Energy (kWh)</th><th>Carbon (kg)</th><th>Perf Score</th></tr>
               </thead>
@@ -1207,7 +1432,7 @@ function OptimizationEngine({ activeMode }) {
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </table></div>
           </div>
         )}
       </>}
@@ -1324,7 +1549,7 @@ function HITLManager() {
       {decisions?.history?.length > 0 && (
         <div className="card" style={{ marginTop: 8 }}>
           <div className="card-title">Decision History</div>
-          <table>
+          <div className="table-scroll"><table>
             <thead>
               <tr><th>Timestamp</th><th>Action</th><th>Mode</th><th>Batch</th><th>Improvement</th><th>Note</th></tr>
             </thead>
@@ -1344,7 +1569,7 @@ function HITLManager() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
     </div>
@@ -1662,7 +1887,7 @@ function ValidationResults() {
       {/* Full Rankings Table */}
       <div className="card">
         <div className="card-title">All Batches — Ranked by Similarity to Golden Signature</div>
-        <table>
+        <div className="table-scroll"><table>
           <thead>
             <tr><th>#</th><th>Batch ID</th><th>Similarity</th><th>Quality</th><th>Yield</th><th>Energy (kWh)</th><th>Carbon (kg)</th><th>Perf Score</th></tr>
           </thead>
@@ -1690,7 +1915,7 @@ function ValidationResults() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       </div>
     </div>
   );
@@ -1810,7 +2035,7 @@ function WhatIfSimulator({ activeMode }) {
       <div className="page-title">🔮 What-If Simulator</div>
       <div className="page-sub">Drag parameters to predict outcomes · Powered by ML regression on 60 batches</div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
         <button className="btn btn-cyan" onClick={resetToGolden}>↺ Reset to Golden</button>
         {[['energy','⚡ Energy'],['quality','🏆 Quality'],['balanced','⚖️ Balanced']].map(([m, label]) => (
           <button key={m} className={`btn ${mode===m ? 'btn-cyan' : ''}`}
@@ -2596,7 +2821,7 @@ function AgentHub() {
       <div className="page-sub">Multi-agent orchestrator · 3 autonomous agents · Track B</div>
 
       {/* Controls */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center', flexWrap: 'wrap' }}>
         <select value={batchId} onChange={e => setBatchId(e.target.value)} style={{ width: 140 }}>
           {batchIds.map(id => <option key={id}>{id}</option>)}
         </select>
@@ -2775,23 +3000,28 @@ function App() {
   const [tab, setTab]         = useState('dashboard');
   const [activeMode, setMode] = useState('balanced');
   const [chatOpen, setChatOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const { data: sigs } = useApi('/golden-signatures', [tab]);
   const { data: proposals } = useApi('/proposals', [tab]);
   const { data: fleetData } = useApi('/fleet-health', []);
   const pendingCount = proposals ? Object.keys(proposals).length : 0;
 
+  // Touch swipe state
+  const touchRef = useRef({ startX: 0, startY: 0 });
+  const mainRef = useRef(null);
+
   const navItems = [
-    { id: 'dashboard',     icon: '🏠', label: 'Dashboard' },
-    { id: 'monitor',       icon: '📊', label: 'Batch Monitor' },
-    { id: 'simulator',     icon: '🔮', label: 'What-If Sim' },
-    { id: 'optimization',  icon: '🧬', label: 'Optimization' },
-    { id: 'hitl',          icon: '🧑‍🔬', label: 'HITL Manager' },
-    { id: 'sustainability',icon: '🌿', label: 'Sustainability' },
-    { id: 'roi',           icon: '💰', label: 'ROI Calculator' },
-    { id: 'knowledge',     icon: '🔗', label: 'Knowledge Graph' },
-    { id: 'agents',        icon: '🤖', label: 'Agent Hub' },
-    { id: 'validation',    icon: '📋', label: 'Validation' },
+    { id: 'dashboard',     icon: '🏠', label: 'Dashboard',      shortLabel: 'Home' },
+    { id: 'monitor',       icon: '📊', label: 'Batch Monitor',  shortLabel: 'Monitor' },
+    { id: 'simulator',     icon: '🔮', label: 'What-If Sim',    shortLabel: 'Simulate' },
+    { id: 'optimization',  icon: '🧬', label: 'Optimization',   shortLabel: 'Optimize' },
+    { id: 'hitl',          icon: '🧑‍🔬', label: 'HITL Manager',   shortLabel: 'HITL' },
+    { id: 'sustainability',icon: '🌿', label: 'Sustainability', shortLabel: 'Carbon' },
+    { id: 'roi',           icon: '💰', label: 'ROI Calculator', shortLabel: 'ROI' },
+    { id: 'knowledge',     icon: '🔗', label: 'Knowledge Graph',shortLabel: 'Graph' },
+    { id: 'agents',        icon: '🤖', label: 'Agent Hub',      shortLabel: 'Agents' },
+    { id: 'validation',    icon: '📋', label: 'Validation',     shortLabel: 'Validate' },
   ];
 
   const modeLabels = {
@@ -2800,8 +3030,49 @@ function App() {
     balanced: '⚖️ Balanced',
   };
 
+  // Navigate to tab and close sidebar
+  const navigateTab = useCallback((tabId) => {
+    setTab(tabId);
+    setSidebarOpen(false);
+    // Scroll main content to top
+    if (mainRef.current) mainRef.current.scrollTop = 0;
+  }, []);
+
+  // Swipe handling for tab navigation
+  const handleTouchStart = useCallback((e) => {
+    touchRef.current.startX = e.touches[0].clientX;
+    touchRef.current.startY = e.touches[0].clientY;
+  }, []);
+
+  const handleTouchEnd = useCallback((e) => {
+    const dx = e.changedTouches[0].clientX - touchRef.current.startX;
+    const dy = e.changedTouches[0].clientY - touchRef.current.startY;
+    // Only trigger if horizontal swipe > 60px and mostly horizontal
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      const currentIdx = navItems.findIndex(n => n.id === tab);
+      if (dx < 0 && currentIdx < navItems.length - 1) {
+        // Swipe left → next tab
+        navigateTab(navItems[currentIdx + 1].id);
+      } else if (dx > 0 && currentIdx > 0) {
+        // Swipe right → prev tab
+        navigateTab(navItems[currentIdx - 1].id);
+      }
+    }
+  }, [tab, navItems, navigateTab]);
+
+  // Scroll bottom tab bar to keep active item visible
+  const bottomBarRef = useRef(null);
+  useEffect(() => {
+    if (bottomBarRef.current) {
+      const activeEl = bottomBarRef.current.querySelector('.bottom-tab-item.active');
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  }, [tab]);
+
   const tabComponents = {
-    dashboard:     <ExecDashboard onNavigate={setTab} activeMode={activeMode} />,
+    dashboard:     <ExecDashboard onNavigate={navigateTab} activeMode={activeMode} />,
     monitor:       <BatchMonitor activeMode={activeMode} />,
     simulator:     <WhatIfSimulator activeMode={activeMode} />,
     optimization:  <OptimizationEngine activeMode={activeMode} />,
@@ -2818,8 +3089,12 @@ function App() {
       {/* SPLASH */}
       <SplashScreen />
 
+      {/* SIDEBAR OVERLAY (mobile) */}
+      <div className={`sidebar-overlay ${sidebarOpen ? 'show' : ''}`}
+        onClick={() => setSidebarOpen(false)} />
+
       {/* SIDEBAR */}
-      <div className="sidebar">
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="logo-block">
           <div className="logo-icon">⚡</div>
           <div className="logo-name">AURAOPTIMA</div>
@@ -2829,7 +3104,7 @@ function App() {
         <nav className="nav">
           {navItems.map(item => (
             <div key={item.id} className={`nav-item ${tab === item.id ? 'active' : ''}`}
-              onClick={() => setTab(item.id)}>
+              onClick={() => navigateTab(item.id)}>
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
               {item.id === 'hitl' && pendingCount > 0 &&
@@ -2854,13 +3129,20 @@ function App() {
       </div>
 
       {/* MAIN */}
-      <div className="main">
+      <div className="main" ref={mainRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}>
         <div className="topbar">
+          {/* Hamburger (visible on mobile via CSS) */}
+          <button className="hamburger" onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle menu">
+            {sidebarOpen ? '✕' : '☰'}
+          </button>
           <span className="topbar-title">
             {navItems.find(n => n.id === tab)?.icon} {navItems.find(n => n.id === tab)?.label}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <AlertPanel fleetData={fleetData} pendingCount={pendingCount} onNavigate={setTab} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+            <AlertPanel fleetData={fleetData} pendingCount={pendingCount} onNavigate={navigateTab} />
             <FleetHealthBanner />
             <div className="topbar-badges">
               <span className="badge badge-cyan">60 Batches</span>
@@ -2873,6 +3155,20 @@ function App() {
 
         <div className="tab-content" key={tab}>
           {tabComponents[tab]}
+        </div>
+      </div>
+
+      {/* BOTTOM TAB BAR (visible on mobile via CSS) */}
+      <div className="bottom-tab-bar" ref={bottomBarRef}>
+        <div className="bottom-tab-bar-inner">
+          {navItems.map(item => (
+            <div key={item.id}
+              className={`bottom-tab-item ${tab === item.id ? 'active' : ''}`}
+              onClick={() => navigateTab(item.id)}>
+              <span className="bottom-tab-icon">{item.icon}</span>
+              <span className="bottom-tab-label">{item.shortLabel}</span>
+            </div>
+          ))}
         </div>
       </div>
 
