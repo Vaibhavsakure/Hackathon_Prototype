@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 import json, os, sys
 import numpy as np
-from sklearn.linear_model import LinearRegression  # type: ignore
+from sklearn.ensemble import RandomForestRegressor  # type: ignore
 
 sys.path.insert(0, os.path.dirname(__file__))
 from deviation_engine import analyze_deviation, rank_all_batches
@@ -15,7 +15,9 @@ from hitl_manager import (
     reprioritize_mode, get_pending_proposals,
     get_decisions_summary, load_json, save_json
 )
-from llm_assistant import chat as llm_chat, generate_batch_insight
+from llm_assistant import chat as llm_chat, generate_batch_insight, generate_why_why_analysis
+from agent_orchestrator import run_all_agents, CarbonAgent, get_agent_notifications
+from knowledge_graph import build_graph, get_graph_summary, get_visualization_graph, get_node_relationships, query_path, get_natural_language_summary
 from report_generator import generate_batch_report
 from database import (
     init_db, get_batches_dataframe, get_all_batches,
@@ -197,7 +199,11 @@ def download_report(batch_id: str, mode: str = "balanced"):
         return Response(
             content=bytes(pdf_bytes) if pdf_bytes is not None else b"",
             media_type="application/pdf",
-            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Access-Control-Expose-Headers": "Content-Disposition",
+                "Content-Type": "application/pdf"
+            }
         )
     except HTTPException:
         raise
@@ -318,7 +324,7 @@ def simulate(req: SimulateRequest):
 
     for outcome in outcomes:
         y = df[outcome].values
-        model = LinearRegression().fit(X, y)
+        model = RandomForestRegressor(n_estimators=50, random_state=42, max_depth=6).fit(X, y)
         pred = float(model.predict(input_vals)[0])
         lo, hi = outcome_bounds.get(outcome, (0, 9999))
         pred = max(lo, min(hi, pred))  # clamp to realistic range
@@ -413,6 +419,75 @@ def get_roi(cost_per_kwh: float = 8.0):
         "batch_savings": batch_savings[:15],
     }
 
+
+# ── GET /knowledge-graph ──────────────────────────────────
+@app.get("/knowledge-graph")
+def get_knowledge_graph(full: bool = False):
+    """Get knowledge graph nodes and edges."""
+    if full:
+        return build_graph()
+    return get_visualization_graph()
+
+@app.get("/knowledge-graph/summary")
+def knowledge_graph_summary():
+    """Get knowledge graph statistics."""
+    return get_graph_summary()
+
+@app.get("/knowledge-graph/node/{node_id}")
+def knowledge_graph_node(node_id: str):
+    """Get relationships for a specific node."""
+    graph = build_graph()
+    rels = get_node_relationships(graph, node_id)
+    node = next((n for n in graph["nodes"] if n["id"] == node_id), None)
+    return {"node": node, "relationships": rels[:30]}
+
+@app.get("/knowledge-graph/path")
+def knowledge_graph_path(from_node: str, to_node: str):
+    """Multi-hop path query between two nodes."""
+    return query_path(from_node, to_node)
+
+@app.get("/knowledge-graph/nl-summary/{node_id}")
+def knowledge_graph_nl_summary(node_id: str):
+    """Get natural language summary for a node."""
+    return get_natural_language_summary(node_id)
+
+@app.get("/agents/notifications")
+def agent_notifications():
+    """Get all agent notifications from fleet scan."""
+    return get_agent_notifications()
+
+# ── GET /agents/run/{batch_id} ────────────────────────────
+@app.get("/agents/run/{batch_id}")
+def run_agents(batch_id: str, mode: str = "balanced"):
+    """Run all 3 agents for a batch and return combined results."""
+    try:
+        return run_all_agents(batch_id, mode)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Agent error: {str(e)}")
+
+# ── GET /carbon-compliance/{batch_id} ─────────────────────
+@app.get("/carbon-compliance/{batch_id}")
+def carbon_compliance(batch_id: str):
+    """Check carbon regulatory compliance for a batch."""
+    try:
+        agent = CarbonAgent()
+        return agent.run(batch_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Carbon agent error: {str(e)}")
+
+# ── GET /why-why/{batch_id} ───────────────────────────────
+@app.get("/why-why/{batch_id}")
+def why_why_analysis(batch_id: str, mode: str = "balanced"):
+    """Generate why-why root cause analysis for a batch."""
+    try:
+        result = generate_why_why_analysis(batch_id, mode)
+        if "error" in result:
+            raise HTTPException(status_code=404, detail=result["error"])
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Why-why analysis error: {str(e)}")
 
 # ── GET /db-stats ─────────────────────────────────────────
 @app.get("/db-stats")

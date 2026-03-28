@@ -1,0 +1,64 @@
+﻿[PASS] Frontend / - Status: 200
+[PASS] GET /batches - Status: 200
+       -> 60 batches loaded
+[PASS] GET /golden-signatures - Status: 200
+       -> Modes: ['energy', 'quality', 'balanced']
+[PASS] GET /deviation/T001 - Status: 200
+       -> Batch: T001, Status: CRITICAL
+[PASS] GET /rankings - Status: 200
+       -> 60 batches ranked
+[PASS] GET /sustainability - Status: 200
+       -> Avg Energy: 93.37 kWh, Avg Carbon: 76.56 kg
+[PASS] GET /fleet-health - Status: 200
+       -> Healthy: 6, Warning: 14, Critical: 40
+[PASS] GET /roi - Status: 200
+       -> Cost Saved: 8490.9, Improvable: 58
+[PASS] POST /optimize - Status: 200
+       -> Label: Max Performance + Min Carbon
+[PASS] POST /simulate - Status: 200
+       -> Quality: 72.13, Energy: 89.18
+[PASS] GET /proposals - Status: 200
+       -> 0 pending proposals
+[PASS] GET /decisions - Status: 200
+[PASS] GET /db-stats - Status: 200
+       -> {"database": "data/auraoptima.db", "engine": "SQLite 3", "tables": ["batches", "decisions", "proposals"], "batch_count":
+[PASS] GET /report/T001 (PDF) - Status: 200
+[PASS] GET /knowledge-graph - Status: 200
+       -> Nodes: 121, Edges: 311
+[PASS] GET /agents/run/T038 - Status: 200
+       -> Agents: 3, Overall: ACTION_REQUIRED, Notifications: 1
+[PASS] GET /carbon-compliance/T038 - Status: 200
+       -> Compliant: True, Violations: 0
+[PASS] GET /agents/notifications - Status: 200
+       -> Notifications: 9, Batches scanned: 5
+
+==================================================
+All non-LLM endpoints tested!
+==================================================
+
+Testing Gemini API chat (may take a few seconds)...
+[PASS] POST /chat (Gemini) - Status: 200
+.\venv\Scripts\python.exe : Traceback (most recent 
+call last):
+At line:1 char:1
++ .\venv\Scripts\python.exe test_all.py 2>&1 | 
+Out-File -Encoding utf8  ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceba 
+   ck (most recent call last)::String) [], RemoteEx  
+  ception
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "E:\hackathonPrototype\test_all.py", line 
+122, in <module>
+    print(f"       -> Response preview: 
+{resp[:150]}...")
+  File "C:\Users\ASUS\AppData\Local\Programs\Python\P
+ython311\Lib\encodings\cp1252.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,en
+coding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode 
+character '\U0001f4ca' in position 28: character 
+maps to <undefined>

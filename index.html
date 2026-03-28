@@ -922,6 +922,16 @@ function BatchMonitor({ activeMode }) {
       .then(r => r.json()).then(d => { setReport(d); setLoadingReport(false); });
   }, [batchId, mode]);
 
+  const downloadReport = async () => {
+    const btn = document.getElementById('dl-btn');
+    if(btn) btn.innerText = '⏳ Downloading...';
+    
+    // Native navigation cleanly downloads the file without CORS/Blob filename mangling
+    window.location.href = `${API}/report/${batchId}?mode=${mode}`;
+    
+    setTimeout(() => { if(btn) btn.innerText = '📄 Download Report'; }, 2000);
+  };
+
   const batchIds = batches ? batches.map(b => b.Batch_ID) : [];
 
   const devColor = (sev) => ({ OK: '#39ff14', WARNING: '#ffb300', CRITICAL: '#ff3d57' }[sev] || '#555');
@@ -942,11 +952,10 @@ function BatchMonitor({ activeMode }) {
         </select>
         {report && <StatusPill status={report.overall_status} />}
         <button
+          id="dl-btn"
           className="btn btn-cyan"
           style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}
-          onClick={() => {
-            window.open(`${API}/report/${batchId}?mode=${mode}`, '_blank');
-          }}
+          onClick={downloadReport}
         >
           📄 Download Report
         </button>
@@ -2321,6 +2330,428 @@ function ExecDashboard({ onNavigate, activeMode }) {
 }
 
 // ══════════════════════════════════════════════════════════
+// TAB 8 — KNOWLEDGE GRAPH
+// ══════════════════════════════════════════════════════════
+function KnowledgeGraphTab() {
+  const [graphData, setGraphData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedNode, setSelectedNode] = useState(null);
+  const [nodeDetail, setNodeDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [summary, setSummary] = useState(null);
+
+  useEffect(() => {
+    fetch(`${API}/knowledge-graph`)
+      .then(r => r.json()).then(d => { setGraphData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+    // Also load summary stats
+    fetch(`${API}/knowledge-graph/summary`)
+      .then(r => r.json()).then(setSummary);
+  }, []);
+
+  const handleNodeClick = (nodeId) => {
+    setSelectedNode(nodeId);
+    setDetailLoading(true);
+    fetch(`${API}/knowledge-graph/node/${nodeId}`)
+      .then(r => r.json()).then(d => { setNodeDetail(d); setDetailLoading(false); });
+  };
+
+  if (loading) return <div className="page"><Loading text="Building knowledge graph..." /></div>;
+  if (!graphData) return <div className="page"><div className="loading">Failed to load graph data</div></div>;
+
+  const nodes = graphData.nodes || [];
+  const edges = graphData.edges || [];
+
+  // Color map for node types
+  const typeColors = {
+    batch: '#00e5ff', golden_signature: '#39ff14', energy_pattern: '#ffb300',
+    anomaly: '#ff3d57', process_parameter: '#a78bfa', asset: '#60a5fa',
+    health_event: '#f97316', raw_material: '#34d399', objective: '#818cf8',
+  };
+  const typeIcons = {
+    batch: '📦', golden_signature: '🧬', energy_pattern: '⚡',
+    anomaly: '🔴', process_parameter: '⚙️', asset: '🏭',
+    health_event: '🚨', raw_material: '🧪', objective: '🎯',
+  };
+
+  // Build positions using a force-directed-like layout (simple circular by type)
+  const typeGroups = {};
+  nodes.forEach(n => { typeGroups[n.type] = typeGroups[n.type] || []; typeGroups[n.type].push(n); });
+  const positions = {};
+  const types = Object.keys(typeGroups);
+  types.forEach((type, ti) => {
+    const group = typeGroups[type];
+    const centerAngle = (ti / types.length) * 2 * Math.PI;
+    const cx = Math.cos(centerAngle) * 3;
+    const cy = Math.sin(centerAngle) * 3;
+    group.forEach((n, ni) => {
+      const angle = (ni / group.length) * 2 * Math.PI;
+      const spread = Math.min(2, group.length * 0.15);
+      positions[n.id] = { x: cx + Math.cos(angle) * spread, y: cy + Math.sin(angle) * spread };
+    });
+  });
+
+  // Build edge traces
+  const edgeX = [], edgeY = [];
+  edges.forEach(e => {
+    const s = positions[e.source], t = positions[e.target];
+    if (s && t) { edgeX.push(s.x, t.x, null); edgeY.push(s.y, t.y, null); }
+  });
+
+  // Build node traces per type
+  const nodeTraces = types.map(type => ({
+    type: 'scatter', mode: 'markers+text', name: type.replace(/_/g, ' ').toUpperCase(),
+    x: typeGroups[type].map(n => positions[n.id].x),
+    y: typeGroups[type].map(n => positions[n.id].y),
+    text: typeGroups[type].map(n => n.label.length > 14 ? n.label.slice(0, 12) + '…' : n.label),
+    customdata: typeGroups[type].map(n => n.id),
+    textposition: 'top center',
+    textfont: { size: 8, color: '#6b7a8d' },
+    marker: { size: type === 'batch' ? 10 : type === 'anomaly' ? 14 : 12, color: typeColors[type] || '#888', opacity: 0.9,
+      line: { width: 1, color: 'rgba(255,255,255,0.2)' } },
+    hovertemplate: '<b>%{text}</b><br>Type: ' + type + '<extra></extra>',
+  }));
+
+  return (
+    <div className="page">
+      <div className="page-title">🔗 Knowledge Graph</div>
+      <div className="page-sub">Manufacturing entity relationships · Multi-hop reasoning · Track A</div>
+
+      {/* Stats */}
+      {summary && (
+        <div className="grid-4" style={{ marginBottom: 20 }}>
+          {[
+            { label: 'Total Nodes', value: summary.total_nodes, color: '#00e5ff' },
+            { label: 'Total Edges', value: summary.total_edges, color: '#39ff14' },
+            { label: 'Node Types', value: Object.keys(summary.node_types || {}).length, color: '#ffb300' },
+            { label: 'Relationship Types', value: Object.keys(summary.relationship_types || {}).length, color: '#a78bfa' },
+          ].map(k => (
+            <div className="kpi" key={k.label}>
+              <div className="kpi-label">{k.label}</div>
+              <div className="kpi-value" style={{ color: k.color }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid-2">
+        {/* Graph Visualization */}
+        <div className="card" style={{ position: 'relative' }}>
+          <div className="card-title">Interactive Node-Edge Graph</div>
+          <Plot
+            data={[
+              { type: 'scatter', mode: 'lines', x: edgeX, y: edgeY, line: { width: 0.5, color: '#1e2d3d' },
+                hoverinfo: 'none', showlegend: false },
+              ...nodeTraces
+            ]}
+            layout={{
+              showlegend: true,
+              legend: { orientation: 'h', y: -0.05, font: { size: 9, color: '#e8f0fe' }, bgcolor: 'transparent' },
+              xaxis: { showgrid: false, zeroline: false, showticklabels: false },
+              yaxis: { showgrid: false, zeroline: false, showticklabels: false },
+              margin: { t: 10, r: 10, b: 50, l: 10 },
+              hovermode: 'closest',
+            }}
+            style={{ width: '100%', height: 450 }}
+          />
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 8 }}>Click a node in the legend to filter. Hover for details.</div>
+        </div>
+
+        {/* Node Detail Panel */}
+        <div className="card">
+          <div className="card-title">Node Inspector</div>
+          {!selectedNode ? (
+            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+              Select a node type below to inspect its relationships
+              <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
+                {nodes.slice(0, 12).map(n => (
+                  <button key={n.id} className="chat-chip" onClick={() => handleNodeClick(n.id)}>
+                    {typeIcons[n.type] || '●'} {n.label.length > 18 ? n.label.slice(0,16) + '…' : n.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : detailLoading ? (
+            <Loading text="Loading node details..." />
+          ) : nodeDetail ? (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <span style={{ fontSize: 24 }}>{typeIcons[nodeDetail.node?.type] || '●'}</span>
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 14, color: typeColors[nodeDetail.node?.type] || '#fff' }}>
+                    {nodeDetail.node?.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--muted)' }}>{nodeDetail.node?.type?.replace(/_/g, ' ')?.toUpperCase()}</div>
+                </div>
+                <button className="btn btn-cyan" style={{ marginLeft: 'auto', fontSize: 11, padding: '4px 10px' }}
+                  onClick={() => { setSelectedNode(null); setNodeDetail(null); }}>✕ Close</button>
+              </div>
+
+              {/* Node Data */}
+              {nodeDetail.node?.data && Object.keys(nodeDetail.node.data).length > 0 && (
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Properties</div>
+                  {Object.entries(nodeDetail.node.data).slice(0, 6).map(([k, v]) => (
+                    <div key={k} className="sig-param">
+                      <span className="sig-param-name">{k.replace(/_/g, ' ')}</span>
+                      <span className="sig-param-val">{typeof v === 'number' ? v.toFixed?.(2) || v : JSON.stringify(v).slice(0,30)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Relationships */}
+              <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+                Relationships ({nodeDetail.relationships?.length || 0})
+              </div>
+              <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                {(nodeDetail.relationships || []).slice(0, 15).map((r, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid rgba(30,45,61,0.5)', fontSize: 12 }}>
+                    <span style={{ color: r.direction === 'outgoing' ? '#00e5ff' : '#ffb300', fontSize: 10 }}>
+                      {r.direction === 'outgoing' ? '→' : '←'}
+                    </span>
+                    <span style={{ color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: 10 }}>{r.relationship}</span>
+                    <span style={{ color: typeColors[r.node?.type] || '#fff', cursor: 'pointer' }}
+                      onClick={() => r.node && handleNodeClick(r.node.id)}>
+                      {r.node?.label || '?'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+      </div>
+
+      {/* Relationship Type Legend */}
+      {summary && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <div className="card-title">Relationship Types (Track A — 8 Required)</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {Object.entries(summary.relationship_types || {}).map(([rel, count]) => (
+              <div key={rel} style={{ padding: '6px 12px', borderRadius: 20, fontSize: 11, background: 'rgba(0,229,255,0.06)',
+                border: '1px solid rgba(0,229,255,0.15)', color: '#00e5ff', fontFamily: 'var(--font-mono)' }}>
+                {rel.replace(/_/g, ' ')} <span style={{ color: 'var(--muted)' }}>×{count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// TAB 9 — AGENT HUB
+// ══════════════════════════════════════════════════════════
+function AgentHub() {
+  const { data: batches } = useApi('/batches', []);
+  const [batchId, setBatchId] = useState('T038');
+  const [results, setResults] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [notifications, setNotifications] = useState(null);
+  const [notiLoading, setNotiLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API}/agents/notifications`)
+      .then(r => r.json()).then(d => { setNotifications(d); setNotiLoading(false); })
+      .catch(() => setNotiLoading(false));
+  }, []);
+
+  const runAgents = () => {
+    setLoading(true);
+    setResults(null);
+    fetch(`${API}/agents/run/${batchId}?mode=balanced`)
+      .then(r => r.json()).then(d => { setResults(d); setLoading(false); })
+      .catch(e => { setResults({ error: e.message }); setLoading(false); });
+  };
+
+  const batchIds = batches ? batches.map(b => b.Batch_ID) : [];
+
+  const statusBadge = (status) => {
+    const map = {
+      HEALTHY: { bg: 'rgba(57,255,20,0.12)', color: '#39ff14', icon: '✅' },
+      WARNING: { bg: 'rgba(255,179,0,0.12)', color: '#ffb300', icon: '⚠️' },
+      CRITICAL: { bg: 'rgba(255,61,87,0.12)', color: '#ff3d57', icon: '🔴' },
+      COMPLIANT: { bg: 'rgba(57,255,20,0.12)', color: '#39ff14', icon: '✅' },
+      NON_COMPLIANT: { bg: 'rgba(255,61,87,0.12)', color: '#ff3d57', icon: '🔴' },
+      PROPOSAL_CREATED: { bg: 'rgba(0,229,255,0.12)', color: '#00e5ff', icon: '📋' },
+      NO_UPDATE_NEEDED: { bg: 'rgba(57,255,20,0.12)', color: '#39ff14', icon: '✅' },
+      ERROR: { bg: 'rgba(255,61,87,0.12)', color: '#ff3d57', icon: '❌' },
+      ACTION_REQUIRED: { bg: 'rgba(255,61,87,0.12)', color: '#ff3d57', icon: '🔴' },
+      REVIEW_NEEDED: { bg: 'rgba(255,179,0,0.12)', color: '#ffb300', icon: '⚠️' },
+      ALL_CLEAR: { bg: 'rgba(57,255,20,0.12)', color: '#39ff14', icon: '✅' },
+    };
+    const s = map[status] || { bg: 'rgba(255,255,255,0.05)', color: '#6b7a8d', icon: '●' };
+    return (
+      <span style={{ padding: '3px 10px', borderRadius: 14, fontSize: 11, fontWeight: 600, fontFamily: 'var(--font-mono)',
+        background: s.bg, color: s.color }}>{s.icon} {status}</span>
+    );
+  };
+
+  return (
+    <div className="page">
+      <div className="page-title">🤖 Agent Hub</div>
+      <div className="page-sub">Multi-agent orchestrator · 3 autonomous agents · Track B</div>
+
+      {/* Controls */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, alignItems: 'center' }}>
+        <select value={batchId} onChange={e => setBatchId(e.target.value)} style={{ width: 140 }}>
+          {batchIds.map(id => <option key={id}>{id}</option>)}
+        </select>
+        <button className="btn btn-cyan" onClick={runAgents} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          {loading ? '⏳ Running...' : '▶ Run All Agents'}
+        </button>
+        {results && (
+          <div style={{ marginLeft: 'auto' }}>
+            {statusBadge(results.overall_status)}
+          </div>
+        )}
+      </div>
+
+      {loading && <Loading text="Running 3 agents on batch..." />}
+
+      {/* Agent Results Cards */}
+      {results && results.agents && (
+        <div className="grid-3" style={{ marginBottom: 20 }}>
+          {results.agents.map((agent, i) => (
+            <div key={i} className="card" style={{ borderTop: `3px solid ${
+              agent.status === 'COMPLIANT' || agent.status === 'HEALTHY' || agent.status === 'NO_UPDATE_NEEDED' ? '#39ff14' :
+              agent.status === 'WARNING' || agent.status === 'PROPOSAL_CREATED' || agent.status === 'REVIEW_NEEDED' ? '#ffb300' : '#ff3d57'
+            }` }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <span style={{ fontSize: 20 }}>{agent.icon || '🤖'}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text)' }}>{agent.agent}</div>
+                </div>
+                {statusBadge(agent.status)}
+              </div>
+
+              {/* Plain English Summary */}
+              {agent.plain_english && (
+                <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.6, marginBottom: 12, padding: '10px 12px',
+                  background: 'rgba(0,229,255,0.04)', borderRadius: 8, border: '1px solid rgba(0,229,255,0.1)' }}>
+                  {agent.plain_english}
+                </div>
+              )}
+
+              {/* Agent-specific metrics */}
+              {agent.agent === 'Prediction Agent' && agent.feature_impacts && (
+                <div>
+                  <div style={{ fontSize: 10, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>
+                    Top Feature Impacts
+                  </div>
+                  {agent.feature_impacts.slice(0, 3).map((f, fi) => (
+                    <div key={fi} className="sig-param">
+                      <span className="sig-param-name">{f.parameter.replace(/_/g, ' ')}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: f.severity === 'CRITICAL' ? '#ff3d57' : f.severity === 'WARNING' ? '#ffb300' : '#39ff14' }}>
+                        {f.contribution_pct}% ({f.deviation_pct > 0 ? '+' : ''}{f.deviation_pct.toFixed(1)}%)
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {agent.agent === 'Golden Signature Agent' && (
+                <div>
+                  {agent.confidence && agent.confidence.level !== 'N/A' && (
+                    <div className="sig-param">
+                      <span className="sig-param-name">Confidence</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: agent.confidence.level === 'HIGH' ? '#39ff14' : '#ffb300' }}>
+                        {agent.confidence.level} ({(agent.confidence.score * 100).toFixed(0)}%)
+                      </span>
+                    </div>
+                  )}
+                  {agent.projected_impact && (
+                    <>
+                      <div className="sig-param">
+                        <span className="sig-param-name">Energy Impact</span>
+                        <span className="sig-param-val">{agent.projected_impact.energy_change_kWh > 0 ? '+' : ''}{agent.projected_impact.energy_change_kWh} kWh</span>
+                      </div>
+                      <div className="sig-param">
+                        <span className="sig-param-name">Quality Impact</span>
+                        <span className="sig-param-val">{agent.projected_impact.quality_change > 0 ? '+' : ''}{agent.projected_impact.quality_change}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {agent.agent === 'Carbon Agent' && (
+                <div>
+                  <div className="sig-param">
+                    <span className="sig-param-name">Carbon</span>
+                    <span className="sig-param-val">{agent.batch_carbon_kg} kg CO₂</span>
+                  </div>
+                  <div className="sig-param">
+                    <span className="sig-param-name">Energy</span>
+                    <span className="sig-param-val">{agent.batch_energy_kWh} kWh</span>
+                  </div>
+                  {agent.violations && agent.violations.length > 0 && (
+                    <div style={{ marginTop: 8 }}>
+                      {agent.violations.map((v, vi) => (
+                        <div key={vi} style={{ fontSize: 11, padding: '4px 8px', borderRadius: 6, marginBottom: 4,
+                          background: v.severity === 'CRITICAL' ? 'rgba(255,61,87,0.08)' : 'rgba(255,179,0,0.08)',
+                          color: v.severity === 'CRITICAL' ? '#ff3d57' : '#ffb300' }}>
+                          ⚠ {v.message}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {agent.sdg_alignment && (
+                    <div style={{ marginTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {Object.entries(agent.sdg_alignment).map(([sdg, text]) => (
+                        <div key={sdg} style={{ fontSize: 10, padding: '3px 8px', borderRadius: 12,
+                          background: text.includes('✅') ? 'rgba(57,255,20,0.08)' : 'rgba(255,179,0,0.08)',
+                          color: text.includes('✅') ? '#39ff14' : '#ffb300', border: '1px solid currentColor', borderColor: 'rgba(255,255,255,0.1)' }}>
+                          {sdg}: {text.includes('✅') ? '✅' : '⚠️'}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Notifications */}
+      <div className="card">
+        <div className="card-title">🔔 Agent Notifications — Fleet Scan</div>
+        {notiLoading ? <Loading text="Scanning fleet..." /> : (
+          notifications && notifications.notifications && notifications.notifications.length > 0 ? (
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}>
+                {notifications.count} alerts from {notifications.batches_scanned} worst-performing batches
+              </div>
+              {notifications.notifications.map((n, i) => (
+                <div key={i} className="alert-item" style={{ border: '1px solid var(--border)', borderRadius: 8, marginBottom: 6, borderLeft: `3px solid ${n.severity === 'CRITICAL' ? '#ff3d57' : '#ffb300'}` }}>
+                  <span className="alert-icon">{n.icon}</span>
+                  <div>
+                    <div style={{ fontSize: 12, color: 'var(--text)', lineHeight: 1.5 }}>
+                      <strong style={{ color: n.severity === 'CRITICAL' ? '#ff3d57' : '#ffb300' }}>[{n.batch_id}]</strong> {n.message}
+                    </div>
+                    <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--font-mono)', marginTop: 2 }}>
+                      {n.agent} · {n.type}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: 20, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>
+              ✅ No critical alerts — fleet is operating within acceptable parameters
+            </div>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════
 // SPLASH SCREEN
 // ══════════════════════════════════════════════════════════
 function SplashScreen() {
@@ -2358,6 +2789,8 @@ function App() {
     { id: 'hitl',          icon: '🧑‍🔬', label: 'HITL Manager' },
     { id: 'sustainability',icon: '🌿', label: 'Sustainability' },
     { id: 'roi',           icon: '💰', label: 'ROI Calculator' },
+    { id: 'knowledge',     icon: '🔗', label: 'Knowledge Graph' },
+    { id: 'agents',        icon: '🤖', label: 'Agent Hub' },
     { id: 'validation',    icon: '📋', label: 'Validation' },
   ];
 
@@ -2375,6 +2808,8 @@ function App() {
     hitl:          <HITLManager />,
     sustainability:<Sustainability />,
     roi:           <ROICalculator />,
+    knowledge:     <KnowledgeGraphTab />,
+    agents:        <AgentHub />,
     validation:    <ValidationResults />,
   };
 

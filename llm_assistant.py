@@ -283,6 +283,12 @@ AuraOptima uses a "Golden Signature" approach — the best-performing batches ar
 - Provide actionable recommendations when relevant.
 - Use domain terminology (pharmaceutical manufacturing).
 - When asked about deviations, explain both the cause and the impact.
+- When asked "why" questions, perform a why-why root cause analysis:
+  1. What happened? (status and key metric)
+  2. Which parameters caused it? (top deviating parameters with contribution %)
+  3. Why did those parameters deviate? (relate to process conditions)
+  4. What is the fix? (specific actionable recommendation with numbers)
+  Chain these together so the operator understands the full cause-effect path.
 - Format numbers clearly (e.g., "82.5 kWh", "67.7 kg CO₂").
 - Use emoji sparingly for key points (✅, ⚠️, 📊, 💡).
 - Keep responses focused — avoid unnecessary padding.
@@ -434,6 +440,90 @@ Provide your analysis with:
         "insight":  response_text,
         "summary":  report["summary"],
         "savings":  report["savings_potential"],
+    }
+
+
+# ─── WHY-WHY ROOT CAUSE ANALYSIS ─────────────────────────
+def generate_why_why_analysis(batch_id, mode="balanced"):
+    """
+    Generate a structured why-why root cause analysis for a batch.
+    This chains together: What happened → Why → Why deeper → Fix.
+    """
+    from deviation_engine import analyze_deviation
+
+    report = analyze_deviation(batch_id, mode=mode)
+    if "error" in report:
+        return report
+
+    summary = report["summary"] if isinstance(report.get("summary"), dict) else {}
+    param_analysis = report.get("param_analysis", {})
+
+    # Build the deviating parameters list
+    deviating = []
+    for param, info in param_analysis.items():
+        if info["severity"] != "OK":
+            deviating.append({
+                "param": param,
+                "deviation": info["deviation_pct"],
+                "severity": info["severity"],
+                "direction": info["direction"],
+                "batch_val": info["batch_value"],
+                "golden_val": info["golden_value"],
+            })
+    deviating.sort(key=lambda x: abs(x["deviation"]), reverse=True)
+
+    prompt = f"""Perform a structured WHY-WHY root cause analysis for Batch {batch_id}.
+
+Use this exact format:
+
+## Level 1: WHAT happened?
+Describe the batch status and key metrics.
+
+## Level 2: WHICH parameters caused it?
+List the top deviating parameters with their contribution.
+
+## Level 3: WHY did those parameters deviate?
+Explain the likely process conditions that led to each deviation.
+
+## Level 4: ROOT CAUSE
+Identify the most likely root cause.
+
+## Level 5: RECOMMENDED FIX
+Provide specific actionable steps with numbers.
+
+## Deviation Data:
+- Overall Status: {report.get('overall_status')}
+- Critical Parameters: {summary.get('critical_params', 0)}
+- Warning Parameters: {summary.get('warning_params', 0)}
+
+### Deviating Parameters:
+{json.dumps(deviating, indent=2)}
+
+### Outcome vs Golden:
+{json.dumps(report['outcome_comparison'], indent=2)}
+
+### Savings if fixed:
+{json.dumps(report['savings_potential'], indent=2)}
+
+Be specific with batch IDs, parameter names, and numbers.
+Keep each level concise (2-3 sentences max).
+"""
+
+    system = (
+        "You are AuraOptima AI. Perform structured root cause analysis. "
+        "Use the exact Level 1-5 format requested. Be specific and actionable."
+    )
+
+    analysis_text = _generate(prompt, system=system, max_tokens=800)
+
+    return {
+        "batch_id": batch_id,
+        "mode": mode,
+        "status": report["overall_status"],
+        "why_why_analysis": analysis_text,
+        "deviating_parameters": deviating,
+        "summary": report["summary"],
+        "savings": report["savings_potential"],
     }
 
 

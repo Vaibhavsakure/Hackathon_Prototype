@@ -86,11 +86,32 @@ if code == 200:
 # 14. Report PDF
 code, _ = test("GET /report/T001 (PDF)", "GET", f"{BASE}/report/T001?mode=balanced")
 
+# 15. Knowledge Graph
+code, data = test("GET /knowledge-graph", "GET", f"{BASE}/knowledge-graph")
+if code == 200:
+    print(f"       -> Nodes: {len(data.get('nodes', []))}, Edges: {len(data.get('edges', []))}")
+
+# 16. Agents Run
+code, data = test("GET /agents/run/T038", "GET", f"{BASE}/agents/run/T038?mode=balanced")
+if code == 200:
+    agents = data.get("agents", [])
+    print(f"       -> Agents: {len(agents)}, Overall: {data.get('overall_status')}, Notifications: {data.get('notification_count')}")
+
+# 17. Carbon Compliance
+code, data = test("GET /carbon-compliance/T038", "GET", f"{BASE}/carbon-compliance/T038")
+if code == 200:
+    print(f"       -> Compliant: {data.get('compliant')}, Violations: {len(data.get('violations', []))}")
+
+# 18. Agent Notifications
+code, data = test("GET /agents/notifications", "GET", f"{BASE}/agents/notifications")
+if code == 200:
+    print(f"       -> Notifications: {data.get('count')}, Batches scanned: {data.get('batches_scanned')}")
+
 print("\n" + "="*50)
 print("All non-LLM endpoints tested!")
 print("="*50)
 
-# 15. Chat (Gemini API test)
+# 19. Chat (Gemini API test)
 print("\nTesting Gemini API chat (may take a few seconds)...")
 code, data = test("POST /chat (Gemini)", "POST", f"{BASE}/chat", {
     "message": "What is the best performing batch?",
@@ -102,6 +123,16 @@ if code == 200:
 elif code == 500:
     print(f"       -> ERROR: {data.get('detail', 'Unknown error')}")
 
+# 20. Why-Why Analysis (LLM test)
+print("\nTesting why-why analysis (may take a few seconds)...")
+code, data = test("GET /why-why/T038", "GET", f"{BASE}/why-why/T038?mode=balanced")
+if code == 200:
+    analysis = data.get("why_why_analysis", "")
+    print(f"       -> Status: {data.get('status')}, Analysis preview: {analysis[:120]}...")
+elif code == 500:
+    print(f"       -> ERROR (LLM may be unavailable): {data.get('detail', 'Unknown error')[:100]}")
+
 print("\n" + "="*50)
 print("FULL VERIFICATION COMPLETE!")
 print("="*50)
+
